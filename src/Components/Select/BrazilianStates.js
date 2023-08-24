@@ -115,11 +115,11 @@ const states = [
 export default function BrazilianStates({value, onChange}) {
 	return (
 		<div>
-			<FormControl fullWidth variant="filled">
+			<FormControl fullWidth variant="standard">
 			 <InputLabel id="demo-simple-select-label">Estado</InputLabel>
 			<Select
 				label="Estado"
-				variant="filled"
+				variant="standard"
 				value={value ? value : ""}
 				onChange={onChange ? onChange : null}
 			>

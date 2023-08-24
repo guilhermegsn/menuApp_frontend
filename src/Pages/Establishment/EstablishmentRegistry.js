@@ -60,11 +60,11 @@ export default function EstablishmentRegistry() {
           <Grid container spacing={2} style={{ padding: 5 }}>
             <Grid item xs={12} sm={8}>
               <TextField
-                variant="filled"
+                variant="standard"
                 label="Nome do estabelecimento"
                 fullWidth
                 required
-                InputLabelProps={{ shrink: true }} 
+                //InputLabelProps={{ shrink: true }} 
                 value={establishment.name}
                 onChange={(e) => {
                   setEstablishment((prevState) => ({
@@ -79,11 +79,11 @@ export default function EstablishmentRegistry() {
           <Grid container spacing={2} style={{ padding: 5 }}>
             <Grid item xs={12} sm={8}>
               <TextField
-                variant="filled"
+                variant="standard"
                 label="Razão social"
                 fullWidth
                 required
-                InputLabelProps={{ shrink: true }}
+               // InputLabelProps={{ shrink: true }}
                 value={establishment.fullname}
                 onChange={(e) => {
                   setEstablishment((prevState) => ({
@@ -99,11 +99,11 @@ export default function EstablishmentRegistry() {
 
             <Grid item xs={12} sm={2}>
               <TextField
-                variant="filled"
+                variant="standard"
                 label="CNPJ"
                 fullWidth
                 required
-                InputLabelProps={{ shrink: true }}
+               // InputLabelProps={{ shrink: true }}
                 value={establishment.state_registration}
                 onChange={(e) => {
                   setEstablishment((prevState) => ({
@@ -117,10 +117,10 @@ export default function EstablishmentRegistry() {
             </Grid>
             <Grid item xs={12} sm={2}>
               <TextField
-                variant="filled"
+                variant="standard"
                 label="E-mail"
                 fullWidth
-                InputLabelProps={{ shrink: true }}
+               // InputLabelProps={{ shrink: true }}
                 value={establishment.email}
                 onChange={(e) => {
                   setEstablishment((prevState) => ({
@@ -133,10 +133,10 @@ export default function EstablishmentRegistry() {
             </Grid>
             <Grid item xs={12} sm={2}>
               <TextField
-                variant="filled"
+                variant="standard"
                 label="Telefone comercial"
                 fullWidth
-                InputLabelProps={{ shrink: true }}
+               // InputLabelProps={{ shrink: true }}
                 value={establishment.phone}
                 onChange={(e) => {
                   setEstablishment((prevState) => ({
@@ -149,11 +149,11 @@ export default function EstablishmentRegistry() {
             </Grid>
             <Grid item xs={12} sm={2}>
               <TextField
-                variant="filled"
+                variant="standard"
                 label="Telefone celular"
                 fullWidth
                 required
-                InputLabelProps={{ shrink: true }} 
+                //InputLabelProps={{ shrink: true }} 
                 value={establishment.cellphone}
                 onChange={(e) => {
                   setEstablishment((prevState) => ({
@@ -169,11 +169,11 @@ export default function EstablishmentRegistry() {
           <Grid container spacing={2} style={{ padding: 5 }}>
             <Grid item xs={12} sm={2}>
               <TextField
-                variant="filled"
+                variant="standard"
                 label="CEP"
                 fullWidth
                 required
-                InputLabelProps={{ shrink: true }}
+                //InputLabelProps={{ shrink: true }}
                 value={establishment.cep}
                 onChange={(event) => {
                   setEstablishment((prevState) => ({
@@ -186,12 +186,12 @@ export default function EstablishmentRegistry() {
             </Grid>
             <Grid item xs={12} sm={5}>
               <TextField
-                variant="filled"
+                variant="standard"
                 label={"Rua"}
                 fullWidth
                 required
                 placeholder="Digite a rua"
-                InputLabelProps={{ shrink: true }}
+                //InputLabelProps={{ shrink: true }}
                 value={establishment.address}
                 onChange={(event) => {
                   setEstablishment((prevState) => ({
@@ -203,17 +203,18 @@ export default function EstablishmentRegistry() {
             </Grid>
             <Grid item xs={12} sm={1}>
               <TextField
-                variant="filled"
+                variant="standard"
                 label="Número"
                 fullWidth
                 required
-                InputLabelProps={{ shrink: true }} />
+                //InputLabelProps={{ shrink: true }}
+                 />
             </Grid>
             <Grid item xs={12} sm={3}>
               <TextField
-                variant="filled"
+                variant="standard"
                 label="Bairro"
-                InputLabelProps={{ shrink: true }}
+                //InputLabelProps={{ shrink: true }}
                 fullWidth
                 required
                 value={establishment.neighborhood}
@@ -228,12 +229,12 @@ export default function EstablishmentRegistry() {
             </Grid>
             <Grid item xs={12} sm={4}>
               <TextField
-                variant="filled"
+                variant="standard"
                 label="Cidade"
                 fullWidth
                 required
                 value={establishment.city}
-                InputLabelProps={{ shrink: true }}
+                //InputLabelProps={{ shrink: true }}
                 onChange={(event) => {
                   setEstablishment((prevState) => ({
                     ...prevState,
