@@ -26,7 +26,7 @@ export default function MenuBar() {
           <IconButton edge="start" color="inherit" onClick={handleToggleDrawer}>
             <Menu />
           </IconButton>
-          <Typography variant="h6">wikiMenu</Typography>
+          <Typography variant="h6">Menú</Typography>
         </Toolbar>
       </AppBar>
       <Drawer open={open} onClose={handleToggleDrawer}>
