@@ -5,7 +5,13 @@ import {
 import axios from 'axios';
 import BrazilianStates from '../../Components/Select/BrazilianStates';
 
+import { db } from '../../firebaseConfig';
+import { getDocs, addDoc, collection } from 'firebase/firestore';
+
 export default function EstablishmentRegistry() {
+
+  const estabCollection = collection(db, "Establishment")
+
   const [establishment, setEstablishment] = useState({
     name: "",
     fullname: "",
@@ -35,25 +41,25 @@ export default function EstablishmentRegistry() {
     })
   }
 
-  const save = () => {
-    console.log(establishment)
-    setIsLoading(true)
-    axios.post(' http://127.0.0.1:3001/establishment', establishment).then(()=> {
-      alert('Criado com sucesso!')
-    }).catch((e)=> {
-      console.log(e)
-      if(e.response.data.message === "E-mail already exists"){
-        return alert('O e-mail informado já está cadastrado.')
+  const save = async () => {
+      setIsLoading(true);
+      try {
+        const docRef = await addDoc(estabCollection, establishment);
+        console.log('Document ID:', docRef.id);
+        alert('Criado com sucesso!');
+      } catch (error) {
+        console.error(error);
+        alert('Ocorreu um erro\n' + error.message);
+      } finally {
+        setIsLoading(false);
       }
-      alert('Ocorreu um erro\n'+e.response.data.message)
-    }).finally(()=> setIsLoading(false))
   }
 
   return (
     <div>
       
       <Grid container spacing={2} style={{ marginLeft: 5 }}>
-        <h2>Cadastro de Clientes</h2>
+        <h2>Cadastro de Estabelecimento</h2>
       </Grid>
       <Grid item xs={12} >
         <Paper style={{ padding: 5 }} elevation={3}>

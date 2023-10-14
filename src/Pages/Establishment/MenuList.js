@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react'
-import { Box, Button, Card, CardActionArea, CardContent, CardMedia, Grid, IconButton, Modal, Typography } from '@mui/material'
+import React, { useContext, useEffect, useState } from 'react'
+import { Button, Card, CardActionArea, CardContent, CardMedia, Grid, IconButton, Modal, Typography } from '@mui/material'
 import { Add, HorizontalRule, ShoppingCart } from '@mui/icons-material'
-import axios from 'axios'
+import { db } from '../../firebaseConfig'
+import { getDoc, doc } from 'firebase/firestore'
+import { UserContext } from '../../contexts/UserContext'
+import { useHistory } from 'react-router-dom';
 export default function MenuList() {
 
   // const headers = [
@@ -10,36 +13,35 @@ export default function MenuList() {
   //     header: ""
   //   },
   // ]
-
+  const history = useHistory();
   const [data, setData] = useState([])
   const [isLoading, setIsLoading] = useState(false)
-  const [shoopingCart, setShoppingCart] = useState([])
+  //const [shoopingCart, setShoppingCart] = useState([])
   const [openModalCart, setOpenModalCart] = useState(false)
 
-  
+  //const estabCollection = collection(db, "Establishment")
+
+  const { shoopingCart, setShoppingCart } = useContext(UserContext)
 
   useEffect(() => {
     setIsLoading(true)
-    axios.get('http://127.0.0.1:3001/establishment/64d442c645841a5a831e8ec2').then((res) => {
-      //adicionando o qtributo 'qty' aos objetos
-      const newDataMenu = res.data.menu.map((menu) => {
-        const clonedMenu = { ...menu };
-        // Adicionando atributo 'qty' a cada objeto 'menuItems' dentro do 'menu'
-        clonedMenu.menuItems.forEach((item) => {
-          item.qty = 0
-        })
-        return clonedMenu;
-      });
-      const pData = res.data
-      setData({ ...pData, menu: newDataMenu })
-    }).finally(() => setIsLoading(false))
+    const getData = async () => {
+      try {
+        const docRef = doc(db, "Establishment", "C1sOox4WzFxuDJ1fkxK5");
+        const docSnap = await getDoc(docRef)
+        setData(docSnap.data())
+        console.log(docSnap.data())
+      } catch (error) {
+        console.log(error)
+      }finally{setIsLoading(false)}
+    }
+    getData()
   }, [])
 
 
-
   const addShoppingCart = (idMenu, idItem) => {
-    const menu = data.menu.find((menu) => menu._id === idMenu)
-    const item = menu.menuItems.find((item) => item._id === idItem)
+    const menu = data.menu.find((menu) => menu.id === idMenu)
+    const item = menu.menuItems.find((item) => item.id === idItem)
     const cart = shoopingCart.find((item) => item.idItem === idItem)
     if (cart) {
       const copyCart = [...shoopingCart]
@@ -57,14 +59,14 @@ export default function MenuList() {
         qty: 1,
         itemName: item.itemName,
         price: item.itemPrice
-        
+
       }])
     }
   }
 
-  const removeShoppingCart = (idMenu, idItem) => {
-    const menu = data.menu.find((menu) => menu._id === idMenu)
-    const item = menu.menuItems.find((item) => item._id === idItem)
+  const removeShoppingCart = (idItem) => {
+    //const menu = data.menu.find((menu) => menu.id === idMenu)
+    // const item = menu.menuItems.find((item) => item.id === idItem)
     const cart = shoopingCart.find((item) => item.idItem === idItem)
     if (cart) {
       if (cart.qty > 1) {
@@ -89,30 +91,31 @@ export default function MenuList() {
     return 0
   }
 
+  const sendWhatsAppMsg = () => {
+    //console.log(shoopingCart)
+    const msg = `Tem pedido novo!\nMesa: 10\nUsuário: Guilhemrme Nunes\n\nPedido:\n\n${shoopingCart.map((item) => (`${item?.qty} ${item?.itemName}\n`))}
+`
+    console.log(msg.replaceAll(",", ""))
 
-  const createOrder = () => {
-    const order = {
-      userName: 'Guilherme Nunes',
-      local: "Mesa 5",
-      items: shoopingCart
-    }
-    console.log(order)
-    axios.post('http://127.0.0.1:3001/order', order).then((res) => {
-      console.log(res)
-      alert('Pedido realizado!')
-      setOpenModalCart(false)
-    }).catch((e)=> {
-      console.log(e)
-      alert('Erro ao fazer o pedido')
-    })
-  }
+    const phoneNumber = '18981257015'; // Número de telefone do destinatário
+    const encodedMessage = encodeURIComponent(msg);
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+
+    window.open(whatsappUrl, '_blank');
+  };
+
+
 
   return (
     <div>
+      {/* <button onClick={()=> console.log(data)}>data</button>
+      <button onClick={()=> getItems()}>items</button> */}
+
+
       {isLoading ? 'Loading...' :
         <Grid style={{ marginBottom: "50px" }}>
-          {data && data.menu?.map((row) => (
-            <div key={row._id}>
+          {data && data.menu?.map((row, index) => (
+            <div key={index}>
               <Card>
                 <CardActionArea>
                   <CardMedia
@@ -132,10 +135,13 @@ export default function MenuList() {
                   </CardContent>
                 </CardActionArea>
               </Card>
-              {row.menuItems.map((item) => {
+
+
+
+              {row.menuItems.map((item, index) => {
                 return (
                   <Card variant="outlined"
-                    key={item._id}
+                    key={index}
                     style={{ margin: "7px 0px 10px 0px", padding: "15px" }}>
                     <div style={{ float: "left", width: '50%' }}>
                       <p>{item.itemName}
@@ -144,12 +150,12 @@ export default function MenuList() {
                     <div style={{ float: "left", width: '50%', textAlign: 'right' }}>
                       <div style={{ marginTop: "15px" }}>
                         <IconButton color="primary" aria-label="add"
-                          onClick={() => removeShoppingCart(row._id, item._id)}>
+                          onClick={() => removeShoppingCart(item.id)}>
                           <HorizontalRule />
-                        </IconButton> {getNumberCart(item._id)}
+                        </IconButton> {getNumberCart(item.id)}
                         <IconButton color="primary" aria-label="add" onClick={() => [
-                          //incrementQty(item._id),
-                          addShoppingCart(row._id, item._id)
+                          //incrementQty(item.id),
+                          addShoppingCart(row.id, item.id)
                         ]}>
                           <Add />
                         </IconButton>
@@ -168,7 +174,8 @@ export default function MenuList() {
             style={{ width: "100%", marginLeft: "-20px", height: "50px" }}
             variant="contained"
             startIcon={<ShoppingCart />}
-            onClick={() => [console.log(shoopingCart), setOpenModalCart(true)]}
+            //onClick={() => isAuthenticated ? setOpenModalCart(true) : history.push({pathname:'/login', state:{data: data}})}
+            onClick={() => history.push('/shopping-cart')}
           >
             Carrinho</Button>
         </div>}
@@ -198,27 +205,26 @@ export default function MenuList() {
             Itens do pedido
           </Typography>
           <div style={{ margin: "10px" }}>
-            {shoopingCart.map((item) => (
+            {shoopingCart.map((item, index) => (
               <div>
                 {/* <p>{item.itemName} Qtde: {item.qty}</p> */}
 
                 <Card
-                  key={item._id}
+                  key={index}
                   style={{ margin: "7px 0px 10px 0px", padding: "15px" }}>
                   <div style={{ float: "left", width: '50%' }}>
                     <p>{item.itemName}
                       <br />${item.itemPrice} </p>
-
                   </div>
                   <div style={{ float: "left", width: '50%', textAlign: 'right' }}>
                     <div style={{ marginTop: "15px" }}>
                       <IconButton color="primary" aria-label="add"
-                        onClick={() => removeShoppingCart(item?.idMenu, item?.idItem)}
+                        onClick={() => removeShoppingCart(item?.idItem)}
                       >
                         <HorizontalRule />
                       </IconButton> {item.qty}
                       <IconButton color="primary" aria-label="add" onClick={() => [
-                        //incrementQty(item._id),
+                        //incrementQty(item.id),
                         addShoppingCart(item?.idMenu, item?.idItem)
                       ]}>
                         <Add />
@@ -240,7 +246,7 @@ export default function MenuList() {
                 <Button
                   variant="contained"
                   style={{ width: "100%" }}
-                  onClick={() => [console.log(shoopingCart), createOrder()]}
+                  onClick={() => [console.log(shoopingCart), sendWhatsAppMsg()]}
                 >Confirmar</Button>
               </div>
               <div style={{ flexBasis: "50%", padding: "5px" }}>

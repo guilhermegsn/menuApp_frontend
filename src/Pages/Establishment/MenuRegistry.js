@@ -1,6 +1,8 @@
 import { Box, Button, CircularProgress, FormControl, Grid, InputLabel, MenuItem, Modal, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material'
 import axios from 'axios'
 import React, { useState } from 'react'
+import { db } from '../../firebaseConfig';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 export default function MenuRegistry() {
 
@@ -50,18 +52,43 @@ export default function MenuRegistry() {
     setItemsMenu(prevData => [...prevData, copyItemMenu])
   }
 
-  const save = () => {
+  const save = async () => {
     const body = {
       menuName: menuName,
       menuItems: itemsMenu
     }
     setIsLoading(true)
-    axios.post(' http://127.0.0.1:3001/establishment/64d442c645841a5a831e8ec2/menu', body).then(() => {
-      alert('Criado com sucesso!')
-    }).catch((e) => {
-      console.log(e)
-      alert('Ocorreu um erro')
-    }).finally(() => setIsLoading(false))
+
+    try {
+      const docRef = doc(db, 'Establishment', 'C1sOox4WzFxuDJ1fkxK5')
+      
+      const docSnapshot = await getDoc(docRef)
+  
+      if (docSnapshot.exists()) {
+        const existingData = docSnapshot.data();
+  
+        // Concatenar o novo array com o array existente (ou você pode usar outra lógica, como substituição)
+        const updatedArray = existingData.menu.concat(body);
+  
+        // Atualizar o documento com o novo array
+         await updateDoc(docRef, { menu: updatedArray });
+  
+        console.log('Array adicionado com sucesso ao item existente.');
+      } else {
+        console.error('O documento especificado não existe.');
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar o array ao item existente:', error);
+    }
+  
+
+
+    // axios.post(' http://127.0.0.1:3001/establishment/64d442c645841a5a831e8ec2/menu', body).then(() => {
+    //   alert('Criado com sucesso!')
+    // }).catch((e) => {
+    //   console.log(e)
+    //   alert('Ocorreu um erro')
+    // }).finally(() => setIsLoading(false))
   }
 
   return (
