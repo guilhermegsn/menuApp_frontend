@@ -17,6 +17,9 @@ function UserProvider({ children }) {
   const [dataUser, setDataUser] = useState({})
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [shoopingCart, setShoppingCart] = useState([])
+  const [idEstablishment, setIdEstablishment] = useState("")
+  const [dataMenu, setDataMenu] = useState([])
+  const [clientIdUrl, setClientIdUrl] = useState("")
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -104,7 +107,10 @@ function UserProvider({ children }) {
           dataUser, setDataUser,
           isAuthenticated, setIsAuthenticated,
           shoopingCart, setShoppingCart,
-          login, logout, signInWithGoogle
+          login, logout, signInWithGoogle,
+          idEstablishment, setIdEstablishment,
+          dataMenu, setDataMenu,
+          clientIdUrl, setClientIdUrl
         }
       }
     >

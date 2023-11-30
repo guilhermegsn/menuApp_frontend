@@ -5,7 +5,7 @@ import { db } from '../../firebaseConfig'
 import { getDoc, doc } from 'firebase/firestore'
 import { UserContext } from '../../contexts/UserContext'
 import { useHistory } from 'react-router-dom';
-export default function MenuList() {
+export default function MenuList(props) {
 
   // const headers = [
   //   {
@@ -18,30 +18,38 @@ export default function MenuList() {
   const [isLoading, setIsLoading] = useState(false)
   //const [shoopingCart, setShoppingCart] = useState([])
   const [openModalCart, setOpenModalCart] = useState(false)
-
   //const estabCollection = collection(db, "Establishment")
 
   const { shoopingCart, setShoppingCart } = useContext(UserContext)
+
+  const { estabId, clientId } = props.match.params;
 
   useEffect(() => {
     setIsLoading(true)
     const getData = async () => {
       try {
-        const docRef = doc(db, "Establishment", "C1sOox4WzFxuDJ1fkxK5");
+        const docRef = doc(db, "Establishment", estabId);
         const docSnap = await getDoc(docRef)
         setData(docSnap.data())
         console.log(docSnap.data())
       } catch (error) {
         console.log(error)
-      }finally{setIsLoading(false)}
+      } finally { setIsLoading(false) }
     }
+    console.log('clientId: '+clientId)
     getData()
-  }, [])
+    //obtenho o id pela params da url e coloco no context
+   
+  }, [estabId, clientId])
 
 
   const addShoppingCart = (idMenu, idItem) => {
+    console.log('id item: ' + idItem)
+    console.log('id menu: ' + idMenu)
     const menu = data.menu.find((menu) => menu.id === idMenu)
-    const item = menu.menuItems.find((item) => item.id === idItem)
+    const item = menu.items.find((item) => item.id === idItem)
+
+
     const cart = shoopingCart.find((item) => item.idItem === idItem)
     if (cart) {
       const copyCart = [...shoopingCart]
@@ -57,8 +65,8 @@ export default function MenuList() {
         idItem: idItem,
         idMenu: idMenu,
         qty: 1,
-        itemName: item.itemName,
-        price: item.itemPrice
+        name: item.name,
+        price: item.price
 
       }])
     }
@@ -138,14 +146,14 @@ export default function MenuList() {
 
 
 
-              {row.menuItems.map((item, index) => {
+              {row.items.map((item, index) => {
                 return (
                   <Card variant="outlined"
                     key={index}
                     style={{ margin: "7px 0px 10px 0px", padding: "15px" }}>
                     <div style={{ float: "left", width: '50%' }}>
-                      <p>{item.itemName}
-                        <br />${item.itemPrice} </p>
+                      <p>{item.name}
+                        <br />${item.price} </p>
                     </div>
                     <div style={{ float: "left", width: '50%', textAlign: 'right' }}>
                       <div style={{ marginTop: "15px" }}>
@@ -175,7 +183,7 @@ export default function MenuList() {
             variant="contained"
             startIcon={<ShoppingCart />}
             //onClick={() => isAuthenticated ? setOpenModalCart(true) : history.push({pathname:'/login', state:{data: data}})}
-            onClick={() => history.push('/shopping-cart')}
+            onClick={() => history.push(`/shopping-cart/${estabId}/${clientId}`)}
           >
             Carrinho</Button>
         </div>}

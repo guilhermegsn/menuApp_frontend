@@ -1,19 +1,21 @@
-import { Add, HorizontalRule } from '@mui/icons-material'
+import { Add, FlipToBackOutlined, HorizontalRule, RemoveShoppingCart } from '@mui/icons-material'
 import { Button, Card, IconButton, Typography } from '@mui/material'
 import React, { useContext } from 'react'
 import { UserContext } from '../../contexts/UserContext'
 import { useHistory } from 'react-router-dom';
 import { auth } from '../../firebaseConfig';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'
 
 
 export default function ShoppingCart() {
-
-  const establishment = "C1sOox4WzFxuDJ1fkxK5"
-
+  
+  const date = Date.now()
+  const { idEstablishment, clientIdUrl } = useContext(UserContext)
   const history = useHistory();
   const { shoopingCart, setShoppingCart } = useContext(UserContext)
+
+
   const addShoppingCart = (idItem) => {
     const copyCart = [...shoopingCart]
     copyCart.forEach((item) => {
@@ -43,118 +45,127 @@ export default function ShoppingCart() {
     }
   }
 
-  // const getNumberCart = (idItem) => {
-  //   if (shoopingCart.find((item) => item.idItem === idItem)?.qty !== undefined)
-  //     return shoopingCart.find((item) => item.idItem === idItem)?.qty
-  //   return 0
-  // }
-
-//   const sendWhatsAppMsg = () => {
-//     //console.log(shoopingCart)
-//     const msg = `Tem pedido novo!\nMesa: 10\nUsuário: Guilhemrme Nunes\n\nPedido:\n\n${shoopingCart.map((item) => (`${item?.qty} ${item?.itemName}\n`))}
-// `
-//     console.log(msg.replaceAll(",", ""))
-
-//     const phoneNumber = '18981257015'; // Número de telefone do destinatário
-//     const encodedMessage = encodeURIComponent(msg);
-//     const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
-
-//     window.open(whatsappUrl, '_blank');
-//   };
-
   const sendOrder = async () => {
-    const orderCollection = collection(db, "Order");
     const data = {
       user: auth.currentUser.uid,
-      establishment: establishment,
+      establishment: idEstablishment,
       username: auth.currentUser.email,
       status: 1,
-      local: "Mesa 4",
+      local: clientIdUrl,
       items: shoopingCart,
+      date: date
     };
+    const orderCollectionRef = collection(db, "Order");
+    const q = query(
+      collection(db, 'Order'),
+      where('establishment', '==', idEstablishment),
+      where('local', '==', clientIdUrl),
+      where('status', '==', 1)
+    );
     try {
-
-      const storedOrder = JSON.parse(localStorage.getItem("odr"));
-      console.log(storedOrder)
-
-      if(storedOrder)
-      {
-        console.log('existo')
-      }else{
-        console.log('nao existo')
+      const querySnapshot = await getDocs(q)
+      if (!querySnapshot.empty) {
+        // Já existe uma comanda aberta
+        console.log('ja tem comanda aberta')
+        console.log(querySnapshot.docs[0].data())
+        const comandaAberta = querySnapshot.docs[0].data();
+        data.items.forEach((item) => {
+          comandaAberta.items.push(item)
+        })
+        console.log(comandaAberta)
+        const comandaRef = doc(db, 'Order', querySnapshot.docs[0].id);
+        await updateDoc(comandaRef, { items: comandaAberta.items }).then(() => {
+          console.log('Itens adicionado a comanda.')
+        }).catch(() => {  
+          console.log('Erro ao adicionar itens a comanda.')
+        })
+      } else {
+        await addDoc(orderCollectionRef, data).then((res) => {
+          console.log('pedido realizado!')
+          console.log(res)
+        }).catch(() => console.log('erro ao realizar o pedido'))
       }
-
-      // const addItem = await addDoc(orderCollection, data);
-      // if(addItem){
-      //   const odr = {
-      //     dt: new Date(),
-      //     key: addItem.id
-      //   }
-      //   localStorage.setItem("odr", JSON.stringify(odr));
-      // }else{
-      //   console.log('nao')
-      // }
-      
     } catch (error) {
-      console.error(error);
+      console.error('Erro ao verificar comanda aberta:', error);
+      throw error;
     }
   };
 
- 
-
-
-
   return (
     <div>
-      <Typography variant="h6" align="center">
-        Itens do pedido
-      </Typography>
-      <div>
-        {shoopingCart.map((item, index) => (
-          <div>
-            {/* <p>{item.itemName} Qtde: {item.qty}</p> */}
-
-            <Card
-              key={index}
-              style={{ margin: "7px 0px 10px 0px", padding: "15px" }}>
-              <div style={{ float: "left", width: '50%' }}>
-                <p>{item.itemName}
-                  <br />${item.price} </p>
-              </div>
-              <div style={{ float: "left", width: '50%', textAlign: 'right' }}>
-                <div style={{ marginTop: "15px" }}>
-                  <IconButton color="primary" aria-label="add"
-                    onClick={() => removeShoppingCart(item.idItem)}
-                  >
-                    <HorizontalRule />
-                  </IconButton> {item.qty}
-                  <IconButton color="primary" aria-label="add" onClick={() => [
-                    //incrementQty(item.id),
-                    addShoppingCart(item.idItem)
-                  ]}>
-                    <Add />
-                  </IconButton>
-                </div>
-              </div>
-              <p>{item.itemDescription}</p>
-            </Card>
+      {clientIdUrl}
+      {shoopingCart.length <= 0 ?
+        <>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh" }}>
+            <RemoveShoppingCart />
+            <p>Nâo há nada no carrinho.</p>
           </div>
-        ))}
-      </div>
-      <div style={{ position: "fixed", bottom: "0", left: "0", right: "0", padding: "10px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <div style={{ flexBasis: "50%", padding: "5px" }}>
+          <div style={{ position: "fixed", bottom: "0", width: "100%" }}>
             <Button
+              style={{ width: "100%", marginLeft: "-20px", height: "50px" }}
               variant="contained"
-              style={{ width: "100%" }}
-              onClick={() => [sendOrder()]}
-            >Confirmar</Button>
+              startIcon={<FlipToBackOutlined />}
+              //onClick={() => isAuthenticated ? setOpenModalCart(true) : history.push({pathname:'/login', state:{data: data}})}
+              onClick={() => history.push(history.goBack())}
+            >
+              Voltar</Button>
           </div>
-          <div style={{ flexBasis: "50%", padding: "5px" }}>
-                <Button variant="contained" style={{ width: "100%" }} onClick={() => history.push('/establishment/menu/list')}>Voltar</Button>
+        </>
+        :
+        <>
+          <Typography variant="h6" align="center">
+            Itens do pedido
+          </Typography>
+          <div>
+            {shoopingCart.map((item, index) => (
+              <div>
+                {/* <p>{item.itemName} Qtde: {item.qty}</p> */}
+
+                <Card
+                  key={index}
+                  style={{ margin: "7px 0px 10px 0px", padding: "15px" }}>
+                  <div style={{ float: "left", width: '50%' }}>
+                    <p>{item.name}
+                      <br />${item.price} </p>
+                  </div>
+                  <div style={{ float: "left", width: '50%', textAlign: 'right' }}>
+                    <div style={{ marginTop: "15px" }}>
+                      <IconButton color="primary" aria-label="add"
+                        onClick={() => removeShoppingCart(item.idItem)}
+                      >
+                        <HorizontalRule />
+                      </IconButton> {item.qty}
+                      <IconButton color="primary" aria-label="add" onClick={() => [
+                        //incrementQty(item.id),
+                        addShoppingCart(item.idItem)
+                      ]}>
+                        <Add />
+                      </IconButton>
+                    </div>
+                  </div>
+                  <p>{item.itemDescription}</p>
+                </Card>
               </div>
-        </div>
-      </div>
+            ))}
+          </div>
+          <div style={{ position: "fixed", bottom: "0", left: "0", right: "0", padding: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <div style={{ flexBasis: "50%", padding: "5px" }}>
+                <Button variant="contained" style={{ width: "100%" }} onClick={() => history.push(history.goBack())}>Voltar</Button>
+              </div>
+              <div style={{ flexBasis: "50%", padding: "5px" }}>
+                <Button
+                  variant="contained"
+                  style={{ width: "100%" }}
+                  onClick={() => [sendOrder()]}
+                >Pedir!</Button>
+              </div>
+            </div>
+          </div>
+        </>}
+
+      {/* <button onClick={() => console.log(idEstablishment)}>establishment</button>
+      <button onClick={() => console.log(shoopingCart)}>shoopingCart</button> */}
     </div>
   )
 }
