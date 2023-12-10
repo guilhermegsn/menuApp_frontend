@@ -4,12 +4,14 @@ import React, { useContext } from 'react'
 import { UserContext } from '../../contexts/UserContext'
 import { useHistory } from 'react-router-dom';
 import { auth } from '../../firebaseConfig';
-import { addDoc, collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
+import { writeBatch, collection, where, getDocs, query, addDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'
 
 
+
+
 export default function ShoppingCart() {
-  
+
   const date = Date.now()
   const { idEstablishment, clientIdUrl } = useContext(UserContext)
   const history = useHistory();
@@ -45,51 +47,175 @@ export default function ShoppingCart() {
     }
   }
 
-  const sendOrder = async () => {
-    const data = {
-      user: auth.currentUser.uid,
-      establishment: idEstablishment,
-      username: auth.currentUser.email,
-      status: 1,
-      local: clientIdUrl,
-      items: shoopingCart,
-      date: date
-    };
-    const orderCollectionRef = collection(db, "Order");
-    const q = query(
-      collection(db, 'Order'),
-      where('establishment', '==', idEstablishment),
-      where('local', '==', clientIdUrl),
-      where('status', '==', 1)
-    );
+  // const sendOrder = async () => {
+  //   const data = {
+  //     user: auth.currentUser.uid,
+  //     establishment: idEstablishment,
+  //     username: auth.currentUser.email,
+  //     status: 1,
+  //     local: clientIdUrl,
+  //     //items: shoopingCart,
+  //     openingDate: date,
+  //     closingDate: ''
+  //   };
+  //   const orderCollectionRef = collection(db, "Order");
+  //   const q = query(
+  //     collection(db, 'Order'),
+  //     where('establishment', '==', idEstablishment),
+  //     where('local', '==', clientIdUrl),
+  //     where('status', '==', 1)
+  //   );
+  //   try {
+  //     const querySnapshot = await getDocs(q)
+  //     if (!querySnapshot.empty) {
+  //       //Já existe uma comanda aberta
+  //       console.log('ja tem comanda aberta')
+
+  //       const comandaAberta = querySnapshot.docs[0].data();
+  //       console.log('---->',comandaAberta)
+
+  //     }else{
+  //       console.log('inserindo..')
+  //       const docRef = await addDoc(orderCollectionRef, data)
+  //       if(docRef){
+  //         console.log('Comanda criada com sucesso.')
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Erro ao verificar comanda aberta:', error);
+  //     throw error;
+  //   }
+  // };
+
+  // const sendOrder = async () => {
+  //   const data = {
+  //     user: auth.currentUser.uid,
+  //     establishment: idEstablishment,
+  //     username: auth.currentUser.email,
+  //     status: 1,
+  //     local: clientIdUrl,
+  //     //items: shoopingCart,
+  //     openingDate: date,
+  //     closingDate: ''
+  //   };
+
+  //   const orderRef = collection(db, "Order");
+  //   const orderItemRef = collection(db, "OrderItem");
+
+  //   const batch = writeBatch(db);
+
+  //   batch.set(orderItemRef, shoopingCart);
+
+  //   await batch.commit();
+
+  // }
+
+
+  const isOrderOpen = async () => {
     try {
-      const querySnapshot = await getDocs(q)
-      if (!querySnapshot.empty) {
-        // Já existe uma comanda aberta
-        console.log('ja tem comanda aberta')
-        console.log(querySnapshot.docs[0].data())
-        const comandaAberta = querySnapshot.docs[0].data();
-        data.items.forEach((item) => {
-          comandaAberta.items.push(item)
-        })
-        console.log(comandaAberta)
-        const comandaRef = doc(db, 'Order', querySnapshot.docs[0].id);
-        await updateDoc(comandaRef, { items: comandaAberta.items }).then(() => {
-          console.log('Itens adicionado a comanda.')
-        }).catch(() => {  
-          console.log('Erro ao adicionar itens a comanda.')
-        })
-      } else {
-        await addDoc(orderCollectionRef, data).then((res) => {
-          console.log('pedido realizado!')
-          console.log(res)
-        }).catch(() => console.log('erro ao realizar o pedido'))
+      const q = query(
+        collection(db, 'Order'),
+        where('establishment', '==', idEstablishment),
+        where('local', '==', clientIdUrl),
+        where('status', '==', 1)
+      );
+      const res = await getDocs(q);
+      if (res.docs.length > 0) {
+        console.log('encontrei: ', res.docs[0].id);
+        return res.docs[0].id;
       }
+      return null;
     } catch (error) {
-      console.error('Erro ao verificar comanda aberta:', error);
-      throw error;
+      console.log(error);
+      return null;
+    }
+  }
+
+
+  // const sendOrder = async () => {
+  //   const orderData = {
+  //     user: auth.currentUser.uid,
+  //     establishment: idEstablishment,
+  //     username: auth.currentUser.email,
+  //     status: 1,
+  //     local: clientIdUrl,
+  //     //items: shoopingCart,
+  //     openingDate: date,
+  //     closingDate: ''
+  //   };
+  //   // Verifique se a comanda está aberta
+  //   const openOrder = await isOrderOpen();
+  //   const orderItemsRef = collection(db, "OrderItems");
+  //   // Se a comanda estiver aberta, apenas adicione os itens
+  //   console.log('openOrder: ',openOrder)
+  //   if (openOrder) {
+  //     console.log('já tem comanda aberta..')
+  //     const shoppingCartData = {
+  //       'order_id': openOrder,
+  //       'date': new Date(),
+  //       'items': shoopingCart
+  //     }
+  //     const saveItems = await addDoc(orderItemsRef, shoppingCartData);
+  //     if (saveItems) {
+  //       console.log('salvou items!')
+  //     } else {
+  //       console.log('erro ao salvar items')
+  //     }
+  //   } else {
+  //     console.log('criando uma nova comanda...')
+  //     const orderRef = collection(db, "Order");
+  //     await addDoc(orderRef, orderData).then((res) => {
+  //       const shoppingCartData = {
+  //         'order_id': res.id,
+  //         'date': new Date(),
+  //         'items': shoopingCart
+  //       }
+  //       addDoc(orderItemsRef, shoppingCartData)
+  //     }).catch((e) => {
+  //       console.log(e)
+  //     })
+  //   }
+  // }
+
+  const sendOrder = async () => {
+    const openOrder = await isOrderOpen();
+    const orderItemsRef = collection(db, "OrderItems");
+    if (openOrder) {
+      // Adicione os itens à comanda existente
+      const shoppingCartData = {
+        'order_id': openOrder,
+        'establishment': idEstablishment,
+        'local': clientIdUrl,
+        'date': new Date(),
+        'items': shoopingCart
+      };
+      await addDoc(orderItemsRef, shoppingCartData);
+    } else {
+      // Crie uma nova comanda e adicione os itens
+      const orderData = {
+        user: auth.currentUser.uid,
+        establishment: idEstablishment,
+        username: auth.currentUser.email,
+        status: 1,
+        local: clientIdUrl,
+        openingDate: date,
+        closingDate: ''
+      };
+      const orderRef = collection(db, "Order");
+      const saveOrder = await addDoc(orderRef, orderData);
+      if (saveOrder) {
+        const orderItemsData = {
+          'order_id': saveOrder.id,
+          'establishment': idEstablishment,
+          'local': clientIdUrl,
+          'date': new Date(),
+          'items': shoopingCart
+        };
+        await addDoc(orderItemsRef, orderItemsData);
+      }
     }
   };
+
 
   return (
     <div>
