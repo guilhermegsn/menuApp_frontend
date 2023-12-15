@@ -69,8 +69,8 @@ export default function ListMenu(props) {
               </Grid>
             ))}
       </Grid>
-      <button onClick={() => console.log(dataMenu)}>dataMenu</button>
-      <button onClick={() => console.log(idEstablishment)}>estabId</button>
+      {/* <button onClick={() => console.log(dataMenu)}>dataMenu</button>
+      <button onClick={() => console.log(idEstablishment)}>estabId</button> */}
     </div>
   )
 }

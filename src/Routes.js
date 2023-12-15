@@ -37,8 +37,8 @@ export default function Routes() {
         <Route exact path='/menu/:estabId/products/:menuId' component={ProductList} />
 
         <Route exact path='/login' component={Login} />
-        <Route exact path='/shopping-cart' component={withAuthentication(ShoppingCart)} />
-        <Route exact path='/shopping-cart/:estabId/:clientId' component={withAuthentication(ShoppingCart)} />
+        <Route exact path='/shopping-cart' component={ShoppingCart} />
+        <Route exact path='/shopping-cart/:estabId/:clientId' component={ShoppingCart} />
         <Route exact path='/orders' component={withAuthentication(Orders)} />
       </Switch>
     </div>

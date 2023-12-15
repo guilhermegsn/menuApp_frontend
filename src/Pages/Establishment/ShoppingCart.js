@@ -1,12 +1,13 @@
-import { Add, FlipToBackOutlined, HorizontalRule, RemoveShoppingCart } from '@mui/icons-material'
-import { Button, Card, IconButton, Typography } from '@mui/material'
-import React, { useContext } from 'react'
+import { Add, CheckCircle, FlipToBackOutlined, HorizontalRule, RemoveShoppingCart } from '@mui/icons-material'
+import { Button, Card, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Typography } from '@mui/material'
+import React, { useContext, useState } from 'react'
 import { UserContext } from '../../contexts/UserContext'
 import { useHistory } from 'react-router-dom';
 import { auth } from '../../firebaseConfig';
-import { writeBatch, collection, where, getDocs, query, addDoc, getDoc } from 'firebase/firestore';
+import { collection, where, getDocs, query, addDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 
@@ -16,7 +17,8 @@ export default function ShoppingCart() {
   const { idEstablishment, clientIdUrl } = useContext(UserContext)
   const history = useHistory();
   const { shoopingCart, setShoppingCart } = useContext(UserContext)
-
+  const [confirmSave, setConfirmSave] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const addShoppingCart = (idItem) => {
     const copyCart = [...shoopingCart]
@@ -47,70 +49,6 @@ export default function ShoppingCart() {
     }
   }
 
-  // const sendOrder = async () => {
-  //   const data = {
-  //     user: auth.currentUser.uid,
-  //     establishment: idEstablishment,
-  //     username: auth.currentUser.email,
-  //     status: 1,
-  //     local: clientIdUrl,
-  //     //items: shoopingCart,
-  //     openingDate: date,
-  //     closingDate: ''
-  //   };
-  //   const orderCollectionRef = collection(db, "Order");
-  //   const q = query(
-  //     collection(db, 'Order'),
-  //     where('establishment', '==', idEstablishment),
-  //     where('local', '==', clientIdUrl),
-  //     where('status', '==', 1)
-  //   );
-  //   try {
-  //     const querySnapshot = await getDocs(q)
-  //     if (!querySnapshot.empty) {
-  //       //Já existe uma comanda aberta
-  //       console.log('ja tem comanda aberta')
-
-  //       const comandaAberta = querySnapshot.docs[0].data();
-  //       console.log('---->',comandaAberta)
-
-  //     }else{
-  //       console.log('inserindo..')
-  //       const docRef = await addDoc(orderCollectionRef, data)
-  //       if(docRef){
-  //         console.log('Comanda criada com sucesso.')
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error('Erro ao verificar comanda aberta:', error);
-  //     throw error;
-  //   }
-  // };
-
-  // const sendOrder = async () => {
-  //   const data = {
-  //     user: auth.currentUser.uid,
-  //     establishment: idEstablishment,
-  //     username: auth.currentUser.email,
-  //     status: 1,
-  //     local: clientIdUrl,
-  //     //items: shoopingCart,
-  //     openingDate: date,
-  //     closingDate: ''
-  //   };
-
-  //   const orderRef = collection(db, "Order");
-  //   const orderItemRef = collection(db, "OrderItem");
-
-  //   const batch = writeBatch(db);
-
-  //   batch.set(orderItemRef, shoopingCart);
-
-  //   await batch.commit();
-
-  // }
-
-
   const isOrderOpen = async () => {
     try {
       const q = query(
@@ -131,91 +69,58 @@ export default function ShoppingCart() {
     }
   }
 
-
-  // const sendOrder = async () => {
-  //   const orderData = {
-  //     user: auth.currentUser.uid,
-  //     establishment: idEstablishment,
-  //     username: auth.currentUser.email,
-  //     status: 1,
-  //     local: clientIdUrl,
-  //     //items: shoopingCart,
-  //     openingDate: date,
-  //     closingDate: ''
-  //   };
-  //   // Verifique se a comanda está aberta
-  //   const openOrder = await isOrderOpen();
-  //   const orderItemsRef = collection(db, "OrderItems");
-  //   // Se a comanda estiver aberta, apenas adicione os itens
-  //   console.log('openOrder: ',openOrder)
-  //   if (openOrder) {
-  //     console.log('já tem comanda aberta..')
-  //     const shoppingCartData = {
-  //       'order_id': openOrder,
-  //       'date': new Date(),
-  //       'items': shoopingCart
-  //     }
-  //     const saveItems = await addDoc(orderItemsRef, shoppingCartData);
-  //     if (saveItems) {
-  //       console.log('salvou items!')
-  //     } else {
-  //       console.log('erro ao salvar items')
-  //     }
-  //   } else {
-  //     console.log('criando uma nova comanda...')
-  //     const orderRef = collection(db, "Order");
-  //     await addDoc(orderRef, orderData).then((res) => {
-  //       const shoppingCartData = {
-  //         'order_id': res.id,
-  //         'date': new Date(),
-  //         'items': shoopingCart
-  //       }
-  //       addDoc(orderItemsRef, shoppingCartData)
-  //     }).catch((e) => {
-  //       console.log(e)
-  //     })
-  //   }
-  // }
-
   const sendOrder = async () => {
+    setIsLoading(true)
+
     const openOrder = await isOrderOpen();
     const orderItemsRef = collection(db, "OrderItems");
-    if (openOrder) {
-      // Adicione os itens à comanda existente
-      const shoppingCartData = {
-        'order_id': openOrder,
-        'establishment': idEstablishment,
-        'local': clientIdUrl,
-        'date': new Date(),
-        'items': shoopingCart
-      };
-      await addDoc(orderItemsRef, shoppingCartData);
-    } else {
-      // Crie uma nova comanda e adicione os itens
-      const orderData = {
-        user: auth.currentUser.uid,
-        establishment: idEstablishment,
-        username: auth.currentUser.email,
-        status: 1,
-        local: clientIdUrl,
-        openingDate: date,
-        closingDate: ''
-      };
-      const orderRef = collection(db, "Order");
-      const saveOrder = await addDoc(orderRef, orderData);
-      if (saveOrder) {
-        const orderItemsData = {
-          'order_id': saveOrder.id,
-          'establishment': idEstablishment,
-          'local': clientIdUrl,
-          'date': new Date(),
-          'items': shoopingCart
-        };
+
+    const orderData = {
+      user: auth.currentUser.uid,
+      establishment: idEstablishment,
+      username: auth.currentUser.email,
+      status: 1,
+      local: clientIdUrl,
+      openingDate: date,
+      closingDate: ''
+    };
+
+    let orderItemsData = {
+      'order_id': openOrder,
+      'establishment': idEstablishment,
+      'local': clientIdUrl,
+      'date': new Date(),
+      'items': shoopingCart
+    };
+    const orderRef = collection(db, "Order");
+    const saveOrder = await addDoc(orderRef, orderData)
+
+    try {
+     
+      if (openOrder) {
+        orderItemsData.order_id = openOrder
         await addDoc(orderItemsRef, orderItemsData);
+      } else {
+        if (saveOrder) {
+          orderItemsData.order_id = saveOrder.id
+          await addDoc(orderItemsRef, orderItemsData);
+        }
       }
+      setConfirmSave(true)
+    } catch (e) {
+      toast.error('Erro ao enviar pedido. Tente novamente,')
+    } finally{
+      setIsLoading(false)
     }
   };
 
+  const redirectToMenu = () => {
+    let urlMenu = `/menu/${idEstablishment}`
+    if(clientIdUrl)
+      urlMenu = urlMenu + `/${clientIdUrl}`
+    history.push(urlMenu)
+    setShoppingCart([])
+  }
 
   return (
     <div>
@@ -246,7 +151,6 @@ export default function ShoppingCart() {
             {shoopingCart.map((item, index) => (
               <div>
                 {/* <p>{item.itemName} Qtde: {item.qty}</p> */}
-
                 <Card
                   key={index}
                   style={{ margin: "7px 0px 10px 0px", padding: "15px" }}>
@@ -274,6 +178,7 @@ export default function ShoppingCart() {
               </div>
             ))}
           </div>
+          {isLoading && <center><CircularProgress /></center>}
           <div style={{ position: "fixed", bottom: "0", left: "0", right: "0", padding: "10px" }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <div style={{ flexBasis: "50%", padding: "5px" }}>
@@ -282,6 +187,7 @@ export default function ShoppingCart() {
               <div style={{ flexBasis: "50%", padding: "5px" }}>
                 <Button
                   variant="contained"
+                  disabled={isLoading}
                   style={{ width: "100%" }}
                   onClick={() => [sendOrder()]}
                 >Pedir!</Button>
@@ -290,8 +196,45 @@ export default function ShoppingCart() {
           </div>
         </>}
 
-      {/* <button onClick={() => console.log(idEstablishment)}>establishment</button>
-      <button onClick={() => console.log(shoopingCart)}>shoopingCart</button> */}
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
+      {/* Same as */}
+
+      <Dialog
+        open={confirmSave}
+        onClose={() => setConfirmSave(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          <center>  <CheckCircle /></center>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+
+            Pedido enviado com sucesso!
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            autoFocus
+            onClick={() => redirectToMenu()}
+          >
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </div>
   )
 }
