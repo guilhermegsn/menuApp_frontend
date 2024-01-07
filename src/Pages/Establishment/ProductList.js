@@ -11,11 +11,15 @@ export default function ProductList(props) {
   const { dataMenu } = useContext(UserContext)
   const [dataProducts, setDataProducts] = useState([])
   const { shoopingCart, setShoppingCart } = useContext(UserContext)
+  const [menuName, setMenuName] = useState("")
 
 
   useEffect(() => {
-    setDataProducts(dataMenu?.menu?.find((item) => item.id === menuId).items)
+    const data = dataMenu?.menu?.find((item) => item.id === menuId)
+    setDataProducts(data.items)
+    setMenuName(data.name)
   }, [dataMenu, menuId])
+
 
 
   const addShoppingCart = (idMenu, idItem) => {
@@ -77,8 +81,9 @@ export default function ProductList(props) {
 
   return (
     <div>
-
+      <h2>{menuName}</h2>
       <Grid container spacing={2} >
+
         {
           dataProducts && dataProducts?.map((item, index) => (
             <Grid item xs={16} md={3} sm={4}>
@@ -157,7 +162,7 @@ export default function ProductList(props) {
             </div>
           </div>
         </div>}
-      <button onClick={() => console.log(shoopingCart)}>shoopingCart</button>
+      {/* <button onClick={() => console.log(shoopingCart)}>shoopingCart</button> */}
     </div>
   )
 }

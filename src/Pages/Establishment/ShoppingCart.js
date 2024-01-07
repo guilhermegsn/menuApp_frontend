@@ -3,7 +3,7 @@ import { Button, Card, CircularProgress, Dialog, DialogActions, DialogContent, D
 import React, { useContext, useState } from 'react'
 import { UserContext } from '../../contexts/UserContext'
 import { useHistory } from 'react-router-dom';
-import { auth } from '../../firebaseConfig';
+//import { auth } from '../../firebaseConfig';
 import { collection, where, getDocs, query, addDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'
 import { ToastContainer, toast } from 'react-toastify';
@@ -13,7 +13,6 @@ import 'react-toastify/dist/ReactToastify.css';
 
 export default function ShoppingCart() {
 
-  const date = Date.now()
   const { idEstablishment, clientIdUrl } = useContext(UserContext)
   const history = useHistory();
   const { shoopingCart, setShoppingCart } = useContext(UserContext)
@@ -76,12 +75,12 @@ export default function ShoppingCart() {
     const orderItemsRef = collection(db, "OrderItems");
 
     const orderData = {
-      user: auth.currentUser.uid,
+      //user: auth.currentUser.uid,
       establishment: idEstablishment,
-      username: auth.currentUser.email,
+     // username: auth.currentUser.email,
       status: 1,
       local: clientIdUrl,
-      openingDate: date,
+      openingDate: new Date(),
       closingDate: ''
     };
 
@@ -90,17 +89,18 @@ export default function ShoppingCart() {
       'establishment': idEstablishment,
       'local': clientIdUrl,
       'date': new Date(),
+      'status': '1',
       'items': shoopingCart
     };
     const orderRef = collection(db, "Order");
-    const saveOrder = await addDoc(orderRef, orderData)
+   
 
     try {
-     
       if (openOrder) {
         orderItemsData.order_id = openOrder
         await addDoc(orderItemsRef, orderItemsData);
       } else {
+        const saveOrder = await addDoc(orderRef, orderData)
         if (saveOrder) {
           orderItemsData.order_id = saveOrder.id
           await addDoc(orderItemsRef, orderItemsData);
