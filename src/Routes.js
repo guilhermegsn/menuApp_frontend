@@ -29,12 +29,31 @@ export default function Routes() {
         <Route exact path='/interativemenu/:estabId/:clientId' component={MenuList} />
         <Route exact path='/establishment/menu/registry' component={MenuRegistry} />
         <Route exact path='/establishment/menu/list' component={MenuList} />
-        
-        <Route exact path='/menu/:estabId' component={ListMenu} />
-        <Route exact path='/menu/:estabId/:clientId' component={ListMenu} />
-        <Route exact path='/menu/:estabId/:clientId/products/:menuId' component={ProductList} />
 
-        <Route exact path='/menu/:estabId/products/:menuId' component={ProductList} />
+        {/* <Route exact path='/menu/:estabId' component={ListMenu} /> */}
+
+        {/* typeId: 1-QrCode 2-Mesa 3-Delivey 4-Nfc */}
+        <Route exact path='/menu/:estabId/:typeId/:clientId' component={ListMenu} />
+        <Route exact path='/menu/:estabId/:typeId/:clientId/products/:menuId' component={ProductList} />
+
+
+
+    
+        {/* Mesa e Delivery */}
+        {/* <Route exact path='/static/:estabId/:typeId/:clientId' component={ListMenu} />
+        <Route exact path='/static/:estabId/:typeId/:clientId/products/:menuId' component={ProductList} /> */}
+
+
+        {/* <Route exact path='/menu/:estabId/:1/:qrcode/products/:menuId/:clientId' component={ProductList} />
+        <Route exact path='/menu/:estabId/:2/:Mesa 12/products/:menuId' component={ProductList} />
+        <Route exact path='/menu/:estabId/:3/:delivery/products/:menuId/:clientId' component={ProductList} />
+        <Route exact path='/menu/:estabId/:4/:nfc/products/:menuId/:clientId' component={ProductList} />
+         */}
+
+
+
+
+        {/* <Route exact path='/menu/:estabId/products/:menuId' component={ProductList} /> */}
 
         <Route exact path='/login' component={Login} />
         <Route exact path='/shopping-cart' component={ShoppingCart} />

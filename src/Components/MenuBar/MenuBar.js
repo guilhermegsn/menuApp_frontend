@@ -12,12 +12,12 @@ import {
   Toolbar,
   Typography
 } from '@mui/material';
-import { ChecklistRtl, Home, LocationCity, Login, Logout, Menu, ShoppingCart, VerifiedUser } from '@mui/icons-material';
+import { BookOnline, ChecklistRtl, LocationCity, Login, Logout, Menu, ShoppingCart, VerifiedUser } from '@mui/icons-material';
 import { useHistory } from 'react-router-dom';
 import { UserContext } from '../../contexts/UserContext';
 
 export default function MenuBar() {
-  const { isAuthenticated, logout, dataUser, shoopingCart } = useContext(UserContext)
+  const { isAuthenticated, logout, dataUser, shoopingCart, clientIdUrl, userUrl } = useContext(UserContext)
   const [open, setOpen] = useState(false);
   const history = useHistory();
   const handleToggleDrawer = () => {
@@ -54,11 +54,11 @@ export default function MenuBar() {
         <List style={{ width: "15em", marginTop: "70px" }}>
           {isAuthenticated &&
             <p style={{ marginLeft: "15px" }}> Bem vindo(a)! {dataUser?.email}</p>}
-          <ListItem onClick={() => enterPage("/establishment/menu/list")}>
+          <ListItem onClick={() => enterPage(userUrl)}>
             <ListItemIcon>
-              <Home />
+              <BookOnline />
             </ListItemIcon>
-            <ListItemText primary="Home" />
+            <ListItemText primary="Cardápio" />
           </ListItem>
 
           <ListItem onClick={() => console.log(dataUser)}>
@@ -67,15 +67,16 @@ export default function MenuBar() {
             </ListItemIcon>
             <ListItemText primary="User" />
           </ListItem>
+          <ListItem onClick={() => enterPage('/shopping-cart')}>
+            <ListItemIcon>
+              <ShoppingCart />
+            </ListItemIcon>
+            <ListItemText primary="Carrinho" />
+          </ListItem>
 
           {isAuthenticated ?
             <>
-              <ListItem onClick={() => enterPage('/shopping-cart')}>
-                <ListItemIcon>
-                  <ShoppingCart />
-                </ListItemIcon>
-                <ListItemText primary="Carrinho" />
-              </ListItem>
+
 
               <ListItem onClick={() => [history.push('/orders')]}>
                 <ListItemIcon>
@@ -108,9 +109,10 @@ export default function MenuBar() {
             <ListItemText onClick={() => enterPage('/establishment/registry')} primary="Cadastrar estabelecimento" />
           </ListItem>
         </List>
-        {/* <p>{dataUser.email}</p> */}
-        {/* <button onClick={()=> console.log(isAuthenticated)}>isAuthenticated</button>
-        <button onClick={()=> console.log(dataUser)}>dataUser</button> */}
+        <button onClick={()=> console.log(isAuthenticated)}>isAuthenticated</button>
+        <button onClick={()=> console.log(dataUser)}>dataUser</button>
+        <button onClick={()=> console.log(clientIdUrl)}>clientIdUrl</button>
+        <button onClick={()=> console.log(userUrl)}>userUrl</button>
       </Drawer>
     </div>
   )

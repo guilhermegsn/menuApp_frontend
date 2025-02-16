@@ -19,7 +19,12 @@ function UserProvider({ children }) {
   const [shoopingCart, setShoppingCart] = useState([])
   const [idEstablishment, setIdEstablishment] = useState("")
   const [dataMenu, setDataMenu] = useState([])
-  const [clientIdUrl, setClientIdUrl] = useState("")
+  const [establishmentData, setEstablishmentData] = useState(null)
+  const [clientIdUrl, setClientIdUrl] = useState({
+    id: '',
+    type: ''
+  })
+  const [userUrl, setUserUrl] = useState("") //primeira url qual usuário acessou o app
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -110,7 +115,9 @@ function UserProvider({ children }) {
           login, logout, signInWithGoogle,
           idEstablishment, setIdEstablishment,
           dataMenu, setDataMenu,
-          clientIdUrl, setClientIdUrl
+          clientIdUrl, setClientIdUrl,
+          establishmentData, setEstablishmentData,
+          userUrl, setUserUrl
         }
       }
     >
