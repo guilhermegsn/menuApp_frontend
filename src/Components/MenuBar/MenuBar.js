@@ -132,6 +132,8 @@ export default function MenuBar() {
             <ListItemText onClick={() => console.log(establishmentData)} primary="Conheça a Wise Menu" />
           </ListItem>
         </List>
+
+        
         {/* <button onClick={()=> console.log(isAuthenticated)}>isAuthenticated</button>
         <button onClick={()=> console.log(dataUser)}>dataUser</button>
         <button onClick={()=> console.log(userUrl)}>userUrl</button>
