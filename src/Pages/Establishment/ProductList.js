@@ -1,41 +1,34 @@
-import React, { useContext, useEffect, useState } from 'react'
-import { Button, Card, Grid, IconButton } from '@mui/material'
+import React, { useContext } from 'react'
+import { Button, Card, CircularProgress, Grid, IconButton } from '@mui/material'
 import { UserContext } from '../../contexts/UserContext'
 import { Add, FlipToBackOutlined, HorizontalRule } from '@mui/icons-material'
 import { useHistory } from 'react-router-dom/cjs/react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'
+import { useQuery } from '@tanstack/react-query';
 
 export default function ProductList(props) {
   const history = useHistory();
   const { menuId } = props.match.params
   const { dataMenu, idEstablishment } = useContext(UserContext)
-  const [dataProducts, setDataProducts] = useState([])
   const { shoopingCart, setShoppingCart } = useContext(UserContext)
-  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
 
-    const getData = async () => {
-      setIsLoading(true)
-      try {
-        const docRef = collection(db, "Establishment", idEstablishment, "Menu", menuId, "items");
-        const docSnap = await getDocs(docRef)
-        const menus = docSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+  const fetchMenuItems = async (idEstablishment, menuId) => {
+    const docRef = collection(db, "Establishment", idEstablishment, "Menu", menuId, "items");
+    const docSnap = await getDocs(docRef);
+    return docSnap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  };
 
-        setDataProducts(menus)
+  const { data: dataProducts, isLoading } = useQuery({
+    queryKey: ["menuItems", idEstablishment, menuId], // Cache baseado nesses parâmetros
+    queryFn: () => fetchMenuItems(idEstablishment, menuId),
+    staleTime: 1000 * 60 * 15, // Cache válido por 15 minutos
+  });
 
-        console.log('menus', menus)
-
-      } catch (error) {
-        console.log(error)
-      } finally { setIsLoading(false) }
-    }
-    getData()
-  }, [dataMenu, menuId])
 
   const addShoppingCart = (product) => {
     const cart = shoopingCart.find((item) => item.idItem === product.id)
@@ -71,10 +64,8 @@ export default function ProductList(props) {
         });
         setShoppingCart(copyCart)
       } else {
-        console.log('iui')
         const copyCart = [...shoopingCart]
         const filteredItem = copyCart.filter((item) => item.idItem !== product.id);
-        console.log('filtered', filteredItem)
         setShoppingCart(filteredItem);
       }
     }
@@ -88,7 +79,10 @@ export default function ProductList(props) {
 
   return (
     <div>
-      <h2>{dataMenu?.menuName}</h2>
+      {isLoading ? <center><CircularProgress /></center>
+        :
+        <div>
+          <h2>{dataMenu?.menuName}</h2>
       <div style={{ marginBottom: 70 }}>
         <Grid container spacing={2} >
           {
@@ -148,6 +142,8 @@ export default function ProductList(props) {
             </Grid>
           </Grid>
         </div>}
+        </div>
+      }
       {/* <button onClick={() => console.log(dataProducts)}>dataProducts</button>
       <button onClick={() => console.log(dataMenu)}>dataMenu</button>
       <button onClick={() => console.log(shoopingCart)}>ShoppingCart</button> */}

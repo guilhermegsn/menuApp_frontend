@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import {
   AppBar,
   Badge,
@@ -12,12 +12,14 @@ import {
   Toolbar,
   Typography
 } from '@mui/material';
-import { BookOnline, ChecklistRtl, LocationCity, Login, Logout, Menu, ShoppingCart, VerifiedUser } from '@mui/icons-material';
+import { BookOnline, LocationCity, Menu, ShoppingCart } from '@mui/icons-material';
 import { useHistory } from 'react-router-dom';
 import { UserContext } from '../../contexts/UserContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebaseConfig'
 
 export default function MenuBar() {
-  const { isAuthenticated, logout, dataUser, shoopingCart, clientIdUrl, userUrl } = useContext(UserContext)
+  const { isAuthenticated, dataUser, shoopingCart, userUrl, establishmentData, setEstablishmentData, clientIdUrl, idEstablishment } = useContext(UserContext)
   const [open, setOpen] = useState(false);
   const history = useHistory();
   const handleToggleDrawer = () => {
@@ -29,6 +31,27 @@ export default function MenuBar() {
     handleToggleDrawer()
   }
 
+  useEffect(() => {
+    const getDataEstablishment = async () => {
+      console.log('clientIdUrl', clientIdUrl)
+      console.log('isetablish', idEstablishment)
+      if (idEstablishment) {
+        const docRef = doc(db, "Establishment", idEstablishment);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = { id: docSnap.id, ...docSnap.data() }
+          setEstablishmentData(data)
+        } else {
+          console.log("Nenhum documento encontrado!");
+          return null;
+        }
+      } else {
+        console.log('sem id')
+      }
+    }
+    getDataEstablishment()
+  }, [setEstablishmentData, clientIdUrl, idEstablishment])
+
 
   return (
     <div>
@@ -38,7 +61,7 @@ export default function MenuBar() {
             <Menu />
           </IconButton>
 
-          <Typography variant="h6">Menu</Typography>
+          <Typography variant="h6">{establishmentData?.name || "Wise Menu"}</Typography>
 
           {/* Adicionando espaçamento à direita com o Box */}
           <Box sx={{ flexGrow: 1 }} />
@@ -60,13 +83,13 @@ export default function MenuBar() {
             </ListItemIcon>
             <ListItemText primary="Cardápio" />
           </ListItem>
-
+          {/* 
           <ListItem onClick={() => console.log(dataUser)}>
             <ListItemIcon>
               <VerifiedUser />
             </ListItemIcon>
             <ListItemText primary="User" />
-          </ListItem>
+          </ListItem> */}
           <ListItem onClick={() => enterPage('/shopping-cart')}>
             <ListItemIcon>
               <ShoppingCart />
@@ -74,7 +97,7 @@ export default function MenuBar() {
             <ListItemText primary="Carrinho" />
           </ListItem>
 
-          {isAuthenticated ?
+          {/* {isAuthenticated ?
             <>
 
 
@@ -100,19 +123,19 @@ export default function MenuBar() {
               <ListItemText primary="Entrar" />
             </ListItem>
 
-          }
+          } */}
 
           <ListItem >
             <ListItemIcon>
               <LocationCity />
             </ListItemIcon >
-            <ListItemText onClick={() => enterPage('/establishment/registry')} primary="Cadastrar estabelecimento" />
+            <ListItemText onClick={() => console.log(establishmentData)} primary="Conheça a Wise Menu" />
           </ListItem>
         </List>
-        <button onClick={()=> console.log(isAuthenticated)}>isAuthenticated</button>
+        {/* <button onClick={()=> console.log(isAuthenticated)}>isAuthenticated</button>
         <button onClick={()=> console.log(dataUser)}>dataUser</button>
-        <button onClick={()=> console.log(clientIdUrl)}>clientIdUrl</button>
         <button onClick={()=> console.log(userUrl)}>userUrl</button>
+        <button onClick={()=> console.log(establishmentData)}>establishmentData</button> */}
       </Drawer>
     </div>
   )

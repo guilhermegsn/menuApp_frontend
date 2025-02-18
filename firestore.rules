@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // This rule allows anyone with your database reference to view, edit,
+    // and delete all data in your Firestore database. It is useful for getting
+    // started, but it is configured to expire after 30 days because it
+    // leaves your app open to attackers. At that time, all client
+    // requests to your Firestore database will be denied.
+    //
+    // Make sure to write security rules for your app before that time, or else
+    // all client requests to your Firestore database will be denied until you Update
+    // your rules
+   
+   // match /{document=**} {
+   //    allow read, write: if request.time < timestamp.date(2025, 9, 6);
+   //  }
+   
+    // match /{document=**} {
+    //   allow read: if request.auth != null
+    // }
+  
+  
+  	//Regras collection Establishment
+    match /Establishment/{idEstablishment} {
+  		allow read: if true;
+      allow create: if request.auth != null
+ 			allow update: if request.auth != null
+    		&& request.auth.token.role == 'ADM'
+    		&& request.auth.token.establishmentId == idEstablishment;
+		}
+    
+    
+     // Regras para a sub-coleção "Menu" dentro de "Establishment"
+    match /Establishment/{idEstablishment}/Menu/{menuId} {
+      allow read: if true;
+  		allow write: if request.auth != null
+    		&& request.auth.token.role == 'ADM'
+    		&& request.auth.token.establishmentId == idEstablishment;
+    }
+    
+     // Regras para a sub-coleção "Menu/items" dentro de "Establishment"
+    match /Establishment/{idEstablishment}/Menu/{menuId}/items/{itemId} {
+      allow read: if true;
+  		allow write: if request.auth != null
+    		&& request.auth.token.role == 'ADM'
+    		&& request.auth.token.establishmentId == idEstablishment;
+    }
+    
+    
+    match /User/{idUser} {
+  		allow read, create: if true;
+      allow update: if request.auth != null 
+      	&& (
+      	// Permite apenas ADMs alterarem qualquer usuário do estabelecimento
+     		(request.auth.token.role == 'ADM' && request.auth.token.establishmentId == request.resource.data.association.establishmentId) 
+        || (request.auth.uid == idUser && !('association' in resource.data))
+    	)
+  	}
+  
+    
+   match /Ticket/{docId} {
+    allow read: if request.auth != null
+      && request.auth.token.establishmentId == resource.data.establishment;
+    allow write: if request.auth != null
+      && request.auth.token.establishmentId == request.resource.data.establishment;
+	}
+
+    
+		match /OrderItems/{docId} {
+			allow read: if request.auth != null;
+    	allow write: if request.auth != null
+      	&& request.auth.token.establishmentId == request.resource.data.establishment;
+		}
+    
+  }
+}
