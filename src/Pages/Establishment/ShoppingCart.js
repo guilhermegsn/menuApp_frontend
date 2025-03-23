@@ -9,6 +9,7 @@ import { db } from '../../firebaseConfig'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
+import { formatToCurrencyBR } from '../../services/functions';
 
 
 
@@ -336,7 +337,7 @@ export default function ShoppingCart() {
               variant="contained"
               startIcon={<FlipToBackOutlined />}
               //onClick={() => isAuthenticated ? setOpenModalCart(true) : history.push({pathname:'/login', state:{data: data}})}
-              onClick={() => history.push(history.goBack())}
+              onClick={() => history.push(sessionStorage.getItem('establishmentUrl'))}
             >
               Voltar</Button>
           </div>
@@ -357,8 +358,8 @@ export default function ShoppingCart() {
                       key={index}
                       style={{padding: "15px" }}>
                       <div style={{ float: "left", width: '50%' }}>
-                        <p>{item.name}
-                          <br />${item.price} </p>
+                        <p>{item.name} </p>
+                        <p>{formatToCurrencyBR(item.price)}</p>
                       </div>
                       <div style={{ float: "left", width: '50%', textAlign: 'right' }}>
                         <div style={{ marginTop: "15px" }}>
@@ -617,7 +618,7 @@ export default function ShoppingCart() {
                   <Grid container spacing={2}>
                     <Grid item sm={5} xs={12}>
                       <div style={{ marginLeft: 10 }}>
-                        <p>Total do pedido: <strong>{sumTotalOrder()}</strong></p>
+                        <p>Total do pedido: <strong>{formatToCurrencyBR(sumTotalOrder())}</strong></p>
                       </div>
                       <div style={{ marginLeft: 10 }}>
                         <FormLabel id="radioPaymentType">Forma de pagamento:</FormLabel>

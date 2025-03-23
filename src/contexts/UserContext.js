@@ -24,7 +24,6 @@ function UserProvider({ children }) {
     id: '',
     type: ''
   })
-  const [userUrl, setUserUrl] = useState("") //primeira url qual usuário acessou o app
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -117,7 +116,6 @@ function UserProvider({ children }) {
           dataMenu, setDataMenu,
           clientIdUrl, setClientIdUrl,
           establishmentData, setEstablishmentData,
-          userUrl, setUserUrl
         }
       }
     >

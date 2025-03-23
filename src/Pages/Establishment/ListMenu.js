@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { Card, CardActionArea, CardContent, CardMedia, Grid, Typography } from '@mui/material'
 import { db } from '../../firebaseConfig'
 import { getDocs, collection } from 'firebase/firestore'
@@ -8,9 +8,10 @@ import { UserContext } from '../../contexts/UserContext';
 export default function ListMenu(props) {
 
   const location = useLocation();
+  const hasSavedUrl = useRef(false)
   const history = useHistory();
   const [isLoading, setIsLoading] = useState(false)
-  const { dataMenu, setDataMenu, setClientIdUrl, setIdEstablishment, setEstablishmentData, setUserUrl } = useContext(UserContext)
+  const { dataMenu, setDataMenu, setClientIdUrl, setIdEstablishment, setEstablishmentData } = useContext(UserContext)
   const { clientId, estabId, typeId } = props.match.params //id cliente, id estabelecimento, tipo de comanda
 
   useEffect(() => {
@@ -54,9 +55,16 @@ export default function ListMenu(props) {
     history.push(`${currentPath}/products/${id}`);
   }
 
+  //salvo a primeira url que o usuário acessou (Vindo do qrcode)
   useEffect(() => {
-    setUserUrl(location.pathname)
-  }, [])
+    const saveUrlSession = () => {
+      if (!hasSavedUrl.current) {
+        sessionStorage.setItem('establishmentUrl', location.pathname)
+        hasSavedUrl.current = true
+      }
+    }
+    saveUrlSession()
+  }, [location.pathname])
 
   return (
     <div>

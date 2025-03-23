@@ -19,9 +19,10 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'
 
 export default function MenuBar() {
-  const { isAuthenticated, dataUser, shoopingCart, userUrl, establishmentData, setEstablishmentData, clientIdUrl, idEstablishment } = useContext(UserContext)
+  const { isAuthenticated, dataUser, shoopingCart, establishmentData, setEstablishmentData, clientIdUrl, idEstablishment } = useContext(UserContext)
   const [open, setOpen] = useState(false);
   const history = useHistory();
+  const userUrl = sessionStorage.getItem('establishmentUrl')
   const handleToggleDrawer = () => {
     setOpen(!open);
   };

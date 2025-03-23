@@ -10,8 +10,6 @@ import MenuRegistry from './Pages/Establishment/MenuRegistry';
 import MenuList from './Pages/Establishment/MenuList';
 import Login from './Pages/User/Login';
 import ShoppingCart from './Pages/Establishment/ShoppingCart';
-import withAuthentication from './services/withAuthentication';
-import Orders from './Pages/Establishment/Orders';
 import ListMenu from './Pages/Establishment/ListMenu';
 import ProductList from './Pages/Establishment/ProductList';
 
@@ -58,7 +56,6 @@ export default function Routes() {
         <Route exact path='/login' component={Login} />
         <Route exact path='/shopping-cart' component={ShoppingCart} />
         <Route exact path='/shopping-cart/:estabId/:clientId' component={ShoppingCart} />
-        <Route exact path='/orders' component={withAuthentication(Orders)} />
       </Switch>
     </div>
   );
