@@ -17,7 +17,7 @@ export default function ListMenu(props) {
 
   //Definindo tipo Delivery como padrao caso acessar url somente com o nome (wisemenu.com.br/estabelecimento)
   const clientId = 'Delivery';
-  const typeId = 3;
+  const typeId = '3';
 
   useEffect(() => {
     // Verifique se a URL já contém clientId e typeId, senão redirecione
