@@ -6,7 +6,7 @@ import axios from 'axios';
 import BrazilianStates from '../../Components/Select/BrazilianStates';
 
 import { db } from '../../firebaseConfig';
-import { getDocs, addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection } from 'firebase/firestore';
 
 export default function EstablishmentRegistry() {
 
