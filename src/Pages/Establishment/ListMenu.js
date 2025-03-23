@@ -12,7 +12,22 @@ export default function ListMenu(props) {
   const history = useHistory();
   const [isLoading, setIsLoading] = useState(false)
   const { dataMenu, setDataMenu, setClientIdUrl, setIdEstablishment, setEstablishmentData } = useContext(UserContext)
-  const { clientId, estabId, typeId } = props.match.params //id cliente, id estabelecimento, tipo de comanda
+  //let { clientId, estabId, typeId } = props.match.params //id cliente, id estabelecimento, tipo de comanda
+  const { estabId } = props.match.params;
+
+  //Definindo tipo Delivery como padrao caso acessar url somente com o nome (wisemenu.com.br/estabelecimento)
+  const clientId = 'Delivery';
+  const typeId = 3;
+
+  useEffect(() => {
+    // Verifique se a URL já contém clientId e typeId, senão redirecione
+    if (!location.pathname.includes(clientId) || !location.pathname.includes(typeId)) {
+      const newPathname = `/${estabId}/${typeId}/${clientId}`;
+      // Redireciona para a nova URL com clientId e typeId
+      history.replace(newPathname);
+    }
+  }, [estabId, clientId, typeId, history, location.pathname]);
+
 
   useEffect(() => {
     const getData = async () => {

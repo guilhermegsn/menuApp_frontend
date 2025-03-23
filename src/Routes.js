@@ -31,12 +31,17 @@ export default function Routes() {
         {/* <Route exact path='/menu/:estabId' component={ListMenu} /> */}
 
         {/* typeId: 1-QrCode 2-Mesa 3-Delivey 4-Nfc */}
-        <Route exact path='/menu/:estabId/:typeId/:clientId' component={ListMenu} />
-        <Route exact path='/menu/:estabId/:typeId/:clientId/products/:menuId' component={ProductList} />
+        {/* <Route exact path='/menu/:estabId/:typeId/:clientId' component={ListMenu} />
+        <Route exact path='/menu/:estabId/:typeId/:clientId/products/:menuId' component={ProductList} /> */}
+
+        <Route exact path='/shopping-cart' component={ShoppingCart} />
+        <Route exact path='/:estabId' component={ListMenu} />
+        <Route exact path='/:estabId/:typeId/:clientId' component={ListMenu} />
+        <Route exact path='/:estabId/:typeId/:clientId/products/:menuId' component={ProductList} />
 
 
 
-    
+
         {/* Mesa e Delivery */}
         {/* <Route exact path='/static/:estabId/:typeId/:clientId' component={ListMenu} />
         <Route exact path='/static/:estabId/:typeId/:clientId/products/:menuId' component={ProductList} /> */}
@@ -54,7 +59,7 @@ export default function Routes() {
         {/* <Route exact path='/menu/:estabId/products/:menuId' component={ProductList} /> */}
 
         <Route exact path='/login' component={Login} />
-        <Route exact path='/shopping-cart' component={ShoppingCart} />
+        {/* <Route exact path='/shopping-cart' component={ShoppingCart} /> */}
         <Route exact path='/shopping-cart/:estabId/:clientId' component={ShoppingCart} />
       </Switch>
     </div>

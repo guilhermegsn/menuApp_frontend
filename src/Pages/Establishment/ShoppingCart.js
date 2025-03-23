@@ -278,7 +278,7 @@ export default function ShoppingCart() {
   }
 
   const redirectToMenu = () => {
-    let urlMenu = `/menu/${idEstablishment}/${clientIdUrl.typeId}`
+    let urlMenu = `/${idEstablishment}/${clientIdUrl.typeId}`
     if (clientIdUrl)
       urlMenu = urlMenu + `/${clientIdUrl.id}`
     history.push(urlMenu)
