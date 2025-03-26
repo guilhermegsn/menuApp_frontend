@@ -56,10 +56,10 @@ export default function ShoppingCart() {
   }
 
   useEffect(() => {
-    if(isOpenDialogAdreess){
+    if (isOpenDialogAdreess) {
       const addressString = localStorage.getItem("user")
       const localDataAddress = JSON.parse(addressString)
-      if(localDataAddress){
+      if (localDataAddress) {
         setDataAddress(localDataAddress)
       }
     }
@@ -183,7 +183,7 @@ export default function ShoppingCart() {
                 type: dataTicket?.type,
                 //totalOrder: sumTotalOrder(),
                 obs: dataAddress?.obs,
-               // paymentType: dataAddress?.paymentType
+                // paymentType: dataAddress?.paymentType
               }
               const isSaveOrderItems = await saveItemsOrder(dataOrder)
               if (isSaveOrderItems) {
@@ -211,7 +211,7 @@ export default function ShoppingCart() {
             type: dataTicket?.type,
             //totalOrder: sumTotalOrder(),
             obs: dataAddress?.obs,
-          //  paymentType: dataAddress?.paymentType
+            //  paymentType: dataAddress?.paymentType
           }
           const isSaveOrderItems = await saveItemsOrder(dataOrder)
           if (isSaveOrderItems) {
@@ -261,9 +261,9 @@ export default function ShoppingCart() {
           status: 1,
           name: dataTicket?.name,
           type: dataTicket?.type,
-         // totalOrder: sumTotalOrder(),
+          // totalOrder: sumTotalOrder(),
           obs: dataAddress?.obs,
-         // paymentType: dataAddress?.paymentType
+          // paymentType: dataAddress?.paymentType
         }
         const isSaveOrderItems = await saveItemsOrder(dataOrder)
         if (isSaveOrderItems) {
@@ -298,7 +298,7 @@ export default function ShoppingCart() {
           //   state: res.data?.uf,
           //   neighborhood: res.data?.bairro
           // }))
-          let updatedData = {...dataAddress}
+          let updatedData = { ...dataAddress }
           updatedData.address = res.data?.logradouro
           updatedData.city = res.data?.localidade
           updatedData.state = res.data?.uf
@@ -318,6 +318,8 @@ export default function ShoppingCart() {
     } else if (stageModal === 1) {
       setStageModal(2)
     } else if (stageModal === 2) {
+      setStageModal(3)
+    } else if (stageModal === 3) {
       setIsOpenDialodAdreess(false)
     }
   }
@@ -337,7 +339,7 @@ export default function ShoppingCart() {
               variant="contained"
               startIcon={<FlipToBackOutlined />}
               //onClick={() => isAuthenticated ? setOpenModalCart(true) : history.push({pathname:'/login', state:{data: data}})}
-              onClick={() => history.push(sessionStorage.getItem('establishmentUrl'))}
+              onClick={() => history.push(localStorage.getItem('establishmentUrl'))}
             >
               Voltar</Button>
           </div>
@@ -356,7 +358,7 @@ export default function ShoppingCart() {
                     {/* <p>{item.itemName} Qtde: {item.qty}</p> */}
                     <Card
                       key={index}
-                      style={{padding: "15px" }}>
+                      style={{ padding: "15px" }}>
                       <div style={{ float: "left", width: '50%' }}>
                         <p>{item.name} </p>
                         <p>{formatToCurrencyBR(item.price)}</p>
@@ -382,8 +384,8 @@ export default function ShoppingCart() {
                 ))}
               </Grid>
             </div>
-            <br/>
-            <Grid  container spacing={2}>
+            <br />
+            <Grid container spacing={2}>
               <Grid item xs={12} md={3} sm={4}>
                 {clientIdUrl.typeId === '3' && dataAddress.address &&//Delivery
                   <Card key={'address'} style={{ padding: 10, marginBottom: 80 }}>
@@ -419,7 +421,7 @@ export default function ShoppingCart() {
                 <div style={{ flexBasis: "50%", padding: "5px" }}>
                   <Button
                     variant="contained"
-                    disabled={!dataTicket || dataTicket.status !== 1}
+                    disabled={!dataTicket || dataTicket.status !== 1 || dataTicket?.establishment !== idEstablishment}
                     style={{ width: "100%" }}
                     onClick={() => clientIdUrl.typeId === '3' && dataAddress.address === "" ?
                       setIsOpenDialodAdreess(true) : sendOrder()}
@@ -583,38 +585,6 @@ export default function ShoppingCart() {
               }
               {stageModal === 2 &&
                 <>
-                  <Grid item sm={6} xs={12} >
-                    <TextField
-                      variant="standard"
-                      id='name'
-                      label="Nome"
-                      fullWidth
-                      value={dataAddress.name}
-                      onChange={(e) => {
-                        setDataAddress(prevData => ({
-                          ...prevData,
-                          name: e.target.value
-                        }))
-                      }}
-                    />
-                  </Grid>
-                  <Grid item sm={6} xs={12} >
-                    <TextField
-                      id='phoneNumber'
-                      variant="standard"
-                      label="Telefone"
-                      type='tel'
-                      fullWidth
-                      value={dataAddress.phoneNumber}
-                      onChange={(e) => {
-                        setDataAddress(prevData => ({
-                          ...prevData,
-                          phoneNumber: e.target.value
-                        }))
-                      }}
-                    />
-                  </Grid>
-
                   <Grid container spacing={2}>
                     <Grid item sm={5} xs={12}>
                       <div style={{ marginLeft: 10 }}>
@@ -667,7 +637,7 @@ export default function ShoppingCart() {
                       <TextField
                         id='obs'
                         variant="standard"
-                        label="OBS: (Ex: Troco para 50)"
+                        label="Observação"
                         fullWidth
                         value={dataAddress.obs}
                         onChange={(e) => {
@@ -679,7 +649,41 @@ export default function ShoppingCart() {
                       />
                     </Grid>
                   </Grid>
-
+                </>
+              }
+              {stageModal === 3 &&
+                <>
+                  <Grid item sm={6} xs={12} >
+                    <TextField
+                      variant="standard"
+                      id='name'
+                      label="Nome"
+                      fullWidth
+                      value={dataAddress.name}
+                      onChange={(e) => {
+                        setDataAddress(prevData => ({
+                          ...prevData,
+                          name: e.target.value
+                        }))
+                      }}
+                    />
+                  </Grid>
+                  <Grid item sm={6} xs={12} >
+                    <TextField
+                      id='phoneNumber'
+                      variant="standard"
+                      label="Telefone"
+                      type='tel'
+                      fullWidth
+                      value={dataAddress.phoneNumber}
+                      onChange={(e) => {
+                        setDataAddress(prevData => ({
+                          ...prevData,
+                          phoneNumber: e.target.value
+                        }))
+                      }}
+                    />
+                  </Grid>
                 </>
               }
             </Grid>
@@ -690,9 +694,10 @@ export default function ShoppingCart() {
           <Button
             autoFocus
             onClick={() => {
-              stageModal === 1 ? setStageModal(0) :
-                stageModal === 0 ? setIsOpenDialodAdreess(false) :
-                  setStageModal(1)
+              stageModal === 3 ? setStageModal(2) :
+                stageModal === 1 ? setStageModal(0) :
+                  stageModal === 0 ? setIsOpenDialodAdreess(false) :
+                    setStageModal(1)
             }}
           >
             Voltar

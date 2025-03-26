@@ -13,16 +13,18 @@ export default function ListMenu(props) {
   const [isLoading, setIsLoading] = useState(false)
   const { dataMenu, setDataMenu, setClientIdUrl, setIdEstablishment, setEstablishmentData } = useContext(UserContext)
   //let { clientId, estabId, typeId } = props.match.params //id cliente, id estabelecimento, tipo de comanda
-  const { estabId } = props.match.params;
+  const { estabId, typeId, clientId,  } = props.match.params;
 
   //Definindo tipo Delivery como padrao caso acessar url somente com o nome (wisemenu.com.br/estabelecimento)
-  const clientId = 'Delivery';
-  const typeId = '3';
+  // const clientId = 'Delivery';
+  // const typeId = '3';
 
   useEffect(() => {
+    console.log('loc',location.pathname)
     // Verifique se a URL já contém clientId e typeId, senão redirecione
-    if (!location.pathname.includes(clientId) || !location.pathname.includes(typeId)) {
-      const newPathname = `/${estabId}/${typeId}/${clientId}`;
+    // if (!location.pathname.includes(clientId) || !location.pathname.includes(typeId)) {
+      if (!typeId && !clientId) {
+      const newPathname = `/${estabId}/3/Delivery`;
       // Redireciona para a nova URL com clientId e typeId
       history.replace(newPathname);
     }
@@ -74,7 +76,7 @@ export default function ListMenu(props) {
   useEffect(() => {
     const saveUrlSession = () => {
       if (!hasSavedUrl.current) {
-        sessionStorage.setItem('establishmentUrl', location.pathname)
+        localStorage.setItem('establishmentUrl', location.pathname)
         hasSavedUrl.current = true
       }
     }
