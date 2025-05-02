@@ -127,8 +127,8 @@ export default function ProductList(props) {
                 Voltar</Button>
             </div>
             :
-            <div style={{ position: "fixed", bottom: "0", left: "0", right: "0", padding: "10px" }}>
-              <Grid container spacing={2}>
+            <div style={{ position: "fixed", bottom: "0", left: "0", right: "0", padding: "20px" }}>
+              <Grid container spacing={2} justifyContent="flex-end">
                 <Grid item xs={6} md={1} sm={4}>
                   <Button
                     variant="contained"
@@ -140,7 +140,8 @@ export default function ProductList(props) {
                   <Button variant="contained" style={{ width: "100%" }} onClick={() => history.push('/shopping-cart')}>Carrinho</Button>
                 </Grid>
               </Grid>
-            </div>}
+            </div>
+          }
         </div>
       }
       {/* <button onClick={() => console.log(dataProducts)}>dataProducts</button>

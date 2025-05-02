@@ -89,7 +89,7 @@ export default function ListMenu(props) {
         {
           isLoading ? 'Loading...' :
             dataMenu && dataMenu.map((item) => (
-              <Grid item xs={6} md={1} sm={4}>
+              <Grid item xs={6} md={2} sm={4}>
                 <Card onClick={() => getProducts(item.id)}>
                   <CardActionArea>
                     <CardMedia
