@@ -1,5 +1,5 @@
-import { Add, CheckCircle, FlipToBackOutlined, HorizontalRule, RemoveShoppingCart, MopedOutlined, Edit } from '@mui/icons-material'
-import { Box, Button, Card, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel, FormLabel, Grid, IconButton, Paper, Radio, RadioGroup, TextField, Typography, useMediaQuery, useTheme } from '@mui/material'
+import { Add, CheckCircle, FlipToBackOutlined, HorizontalRule, RemoveShoppingCart } from '@mui/icons-material'
+import { Button, Card, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel, FormLabel, Grid, IconButton, Paper, Radio, RadioGroup, TextField, Typography } from '@mui/material'
 import React, { useContext, useEffect, useState } from 'react'
 import { UserContext } from '../../contexts/UserContext'
 import { useHistory } from 'react-router-dom';
@@ -12,11 +12,9 @@ import axios from 'axios';
 import { formatToCurrencyBR, generateCardToken, proccessPayment } from '../../services/functions';
 
 
-
 export default function ShoppingCart() {
 
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const api_url = process.env.REACT_APP_APIURL;
   const { idEstablishment, clientIdUrl } = useContext(UserContext)
   const history = useHistory();
   const { shoopingCart, setShoppingCart } = useContext(UserContext)
@@ -31,10 +29,9 @@ export default function ShoppingCart() {
     type: parseInt(clientIdUrl?.typeId),
     closingDate: '',
     operator: 'Usuário',
+    isOnlinePayment: false
   })
 
-  const [isOpenDialogAdreess, setIsOpenDialodAdreess] = useState(false)
-  const [isLoadingDialog, setIsLoadingDialog] = useState(false)
   const [dataAddress, setDataAddress] = useState({
     zipCode: "",
     address: "",
@@ -49,7 +46,6 @@ export default function ShoppingCart() {
     paymentType: "CASH",
     paymentMethod: ''
   })
-  const [stageModal, setStageModal] = useState(0) //cep 
   const [cardData, setCardData] = useState({
     number: "",
     expiry: "",
@@ -74,14 +70,12 @@ export default function ShoppingCart() {
   }
 
   useEffect(() => {
-    if (isOpenDialogAdreess) {
-      const addressString = localStorage.getItem("user")
-      const localDataAddress = JSON.parse(addressString)
-      if (localDataAddress) {
-        setDataAddress(localDataAddress)
-      }
+    const addressString = localStorage.getItem("user")
+    const localDataAddress = JSON.parse(addressString)
+    if (localDataAddress) {
+      setDataAddress(localDataAddress)
     }
-  }, [isOpenDialogAdreess])
+  }, [])
 
   const removeShoppingCart = (idItem) => {
     const cart = shoopingCart.find((item) => item.idItem === idItem)
@@ -178,7 +172,7 @@ export default function ShoppingCart() {
   }, [shoopingCart])
 
 
-  const saveTicket = async () => {
+  const saveTicket = async (dataTicket) => {
     let copyDataTicket = { ...dataTicket }
     copyDataTicket.local = `${dataAddress.address}, ${dataAddress.number} - ${dataAddress.neighborhood} - ${dataAddress.city}/${dataAddress.state}`
     copyDataTicket.name = dataAddress.name
@@ -274,39 +268,56 @@ export default function ShoppingCart() {
           }
         }
       } else if (clientIdUrl.typeId === '3') {// Delivery
+        setIsLoading(true)
+        try {
+          if (dataAddress.paymentMethod === "ONL" && dataAddress.paymentType === "CRD") {
+            const cardToken = await generateCardToken(idEstablishment, cardData)
+            console.log('cardToken: ', cardToken)
+            if (cardToken) {
+              try {
+                const payment = await proccessPayment(idEstablishment, totalOrder, cardData.email, 'Wise Menu', cardToken)
+                if (payment.status === 'approved') {
+                  alert('Pagamento Aprovado!')
+                  try {
 
-        console.log('order', dataAddress)
-        console.log('carddaya', cardData)
+                    const paymentData = {
+                      id: payment?.id,
+                      establishmentId: idEstablishment,
+                      status: payment?.status,
+                      status_detail: payment?.status_detail,
+                      transaction_amount: payment?.transaction_amount,
+                      description: payment?.description,
+                      payment_method_id: payment?.payment_method_id,
+                      date_approved: payment?.date_approved,
+                      payer_email: payment?.payer?.email || null,
+                    }
 
-        console.log('Deliveryy', dataTicket)
+                    axios.post(`${api_url}/savePayment`, paymentData).then(res => {
+                      console.log('ok.', res.data)
+                    }).catch((e) => {
+                      console.log('erro ao salvar pagamento', e)
+                    })
 
-
-        if (dataAddress.paymentMethod === "ONL" && dataAddress.paymentType === "CRD") {
-          const cardToken = await generateCardToken(idEstablishment, cardData)
-          console.log('cardToken: ',cardToken)
-          if (cardToken) {
-
-            try {
-              const payment = await proccessPayment(idEstablishment, totalOrder, cardData.email,'Wise Menu', cardToken)
-              if(payment.status === 'approved'){
-                alert('Pagamento Aprovado!')
-                saveTicket()
-              }else{
-                alert('Nâo foi possível concluir o pagamento.')
+                  } catch (e) {
+                    console.log('Erro', e)
+                  }
+                  saveTicket({...dataTicket, isOnlinePayment: true})
+                } else {
+                  alert('Nâo foi possível concluir o pagamento.')
+                }
+              } catch (error) {
+                alert('Erro ao processar pagamento.')
+                console.log(error)
               }
-            } catch (error) {
-              alert('Erro ao processar pagamento.')
-              console.log(error)
-            } finally {
-
             }
+          } else {
+            saveTicket(dataTicket)
           }
-        } else {
-          saveTicket()
+        } catch {
+          alert('Erro ao solicitar o pedido')
+        } finally {
+          setIsLoading(false)
         }
-
-
-
       } else {//QrCode || NFC
         const dataOrder = {
           date: new Date(),
@@ -356,46 +367,6 @@ export default function ShoppingCart() {
   }
 
 
-  const saveAddress = () => {
-    if (stageModal === 0) {
-      if (dataAddress.zipCode.length === 8) {
-        setIsLoadingDialog(true)
-        axios.get(`https://viacep.com.br/ws/${dataAddress.zipCode}/json/ `).then((res) => {
-          // setDataAddress(prevData => ({
-          //   ...prevData,
-          //   address: res.data?.logradouro,
-          //   city: res.data?.localidade,
-          //   state: res.data?.uf,
-          //   neighborhood: res.data?.bairro
-          // }))
-          let updatedData = { ...dataAddress }
-          updatedData.address = res.data?.logradouro
-          updatedData.city = res.data?.localidade
-          updatedData.state = res.data?.uf
-          updatedData.neighborhood = res.data?.bairro
-          setDataAddress(updatedData)
-          localStorage.setItem('user', JSON.stringify(updatedData))
-
-        }).catch((e) => {
-          console.log(e)
-        }).finally(() => {
-          setStageModal(1)
-          setIsLoadingDialog(false)
-        })
-      } else {
-        setStageModal(1)
-      }
-    } else if (stageModal === 1) {
-      setStageModal(2)
-    } else if (stageModal === 2) {
-      setStageModal(3)
-    } else if (stageModal === 3) {
-      setStageModal(4)
-    } else if (stageModal === 4) {
-      setIsOpenDialodAdreess(false)
-    }
-  }
-
   const handleCardNumberChange = (text) => {
     // Remove qualquer caractere que não seja número
     let cleaned = text.replace(/\D/g, "")
@@ -418,35 +389,6 @@ export default function ShoppingCart() {
     // Atualiza o estado
     setCardData((prev) => ({ ...prev, expiry: cleaned }))
   }
-
-
-
-  const creditCardWrapperStyle = {
-    position: "relative",
-    width: "270px",
-    height: "120px",
-    borderRadius: "15px",
-    backgroundColor: "#2d2d2d",
-    color: "white",
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-  };
-
-  const cardNumberStyle = {
-    fontSize: "1.5em",
-    letterSpacing: "2px",
-    fontWeight: "bold",
-    marginBottom: "10px",
-  };
-
-  const cardInfoStyle = {
-    display: "flex",
-    justifyContent: "space-between",
-    fontSize: "0.9em",
-  };
-
 
 
   return (
@@ -516,31 +458,6 @@ export default function ShoppingCart() {
               </Grid>
 
               <Grid item xs={12} sm={6} md={6}>
-                {/* {clientIdUrl.typeId === '3' && (
-                  <Card key={'address'} style={{ padding: 10, marginBottom: 80 }}>
-                    <div style={{ display: 'flex' }}>
-                      <div>
-                        <p style={{ marginBottom: -5 }}>Dados da entrega:</p>
-                        <p style={{ marginBottom: -10 }}>Sr.(a) <strong>{dataAddress.name}</strong></p>
-                        <p style={{ marginBottom: -15 }}>{dataAddress.address}, {dataAddress.number}</p>
-                        <p style={{ marginBottom: -15 }}>{dataAddress.neighborhood}</p>
-                        <p style={{ marginBottom: -15 }}>{dataAddress.city} - {dataAddress.state}</p>
-                        <p style={{ marginBottom: 10 }}>{dataAddress.phoneNumber}</p>
-                      </div>
-                      <div style={{ marginLeft: 'auto' }}>
-                        <IconButton
-                          color="primary"
-                          aria-label="edit"
-                          onClick={() => [setIsOpenDialodAdreess(true), setStageModal(0)]}
-                        >
-                          <Edit />
-                        </IconButton>
-                      </div>
-                    </div>
-                  </Card>
-                )} */}
-
-
                 <Grid container spacing={1} justifyContent="center" alignItems="center" style={{ marginBottom: 30 }}>
                   <Grid item xs={12} md={8} lg={8}>
                     <Paper elevation={3} style={{ padding: "20px" }}>

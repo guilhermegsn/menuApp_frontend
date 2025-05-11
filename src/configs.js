@@ -7,4 +7,5 @@ export default {
     messagingSenderId: process.env.REACT_APP_MESSAGINGSENDERID,
     appId: process.env.REACT_APP_APPID,
     measurementId: process.env.REACT_APP_MEASUREMENTID,
+    api_url: process.env.REACT_APP_APIURL,
 }
