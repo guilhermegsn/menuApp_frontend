@@ -122,7 +122,7 @@ export default function ShoppingCart() {
       }
     }
     getDataTicket()
-  }, [clientIdUrl, idEstablishment])
+  }, [clientIdUrl, idEstablishment, dataTicket])
 
 
   useEffect(() => {

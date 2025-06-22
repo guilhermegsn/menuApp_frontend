@@ -3,8 +3,6 @@ import { Button, Card, CircularProgress, Grid, IconButton } from '@mui/material'
 import { UserContext } from '../../contexts/UserContext'
 import { Add, FlipToBackOutlined, HorizontalRule } from '@mui/icons-material'
 import { useHistory } from 'react-router-dom/cjs/react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebaseConfig'
 import { useQuery } from '@tanstack/react-query';
 import { formatToCurrencyBR } from '../../services/functions';
 import configs from '../../configs';
