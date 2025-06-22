@@ -3,18 +3,15 @@ import { Button, Card, CircularProgress, Dialog, DialogActions, DialogContent, D
 import React, { useContext, useEffect, useState } from 'react'
 import { UserContext } from '../../contexts/UserContext'
 import { useHistory } from 'react-router-dom';
-//import { auth } from '../../firebaseConfig';
-import { collection, where, getDocs, query, addDoc, getDoc, doc } from 'firebase/firestore';
-import { db } from '../../firebaseConfig'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { formatToCurrencyBR, generateCardToken, proccessPayment } from '../../services/functions';
-
+import configs from '../../configs';
 
 export default function ShoppingCart() {
 
-  const api_url = process.env.REACT_APP_APIURL;
+  const api_url = process.env.REACT_APP_APIURL
   const { idEstablishment, clientIdUrl } = useContext(UserContext)
   const history = useHistory();
   const { shoopingCart, setShoppingCart } = useContext(UserContext)
@@ -43,7 +40,7 @@ export default function ShoppingCart() {
     complement: "",
     name: "",
     obs: "",
-    paymentType: "CASH",
+    paymentType: "",
     paymentMethod: ''
   })
   const [cardData, setCardData] = useState({
@@ -55,9 +52,6 @@ export default function ShoppingCart() {
     email: ""
   })
   const [totalOrder, setTotalOrder] = useState(0)
-
-
-
 
   const addShoppingCart = (idItem) => {
     const copyCart = [...shoopingCart]
@@ -73,7 +67,7 @@ export default function ShoppingCart() {
     const addressString = localStorage.getItem("user")
     const localDataAddress = JSON.parse(addressString)
     if (localDataAddress) {
-      setDataAddress(localDataAddress)
+      setDataAddress({ ...localDataAddress, paymentType: '' })
     }
   }, [])
 
@@ -96,25 +90,6 @@ export default function ShoppingCart() {
     }
   }
 
-  const getTicketNumber = async () => {
-    console.log('obtendo ticket da mesa...')
-    try {
-      const q = query(
-        collection(db, 'Establishment', idEstablishment, 'Tickets'),
-        where('local', '==', dataTicket?.local),
-        where('status', '==', 1)
-      );
-      const res = await getDocs(q);
-      if (res.docs.length > 0) {
-        console.log('encontrei: ', res.docs[0].id);
-        return res.docs[0].id;
-      }
-      return null;
-    } catch (error) {
-      console.log(error);
-      return null;
-    }
-  }
 
   useEffect(() => {
     const getDataTicket = async () => {
@@ -122,19 +97,21 @@ export default function ShoppingCart() {
       if (clientIdUrl.typeId === '1' || clientIdUrl.typeId === '4') {//Ticket QrCode || NFC
         setIsLoading(true)
         try { //Pesquisa dados do ticket
-          const docRef = doc(db, 'Establishment', idEstablishment, 'Tickets', clientIdUrl.id)
-          const docSnapshot = await getDoc(docRef)
-          const currDataTicket = docSnapshot.data()
-          if (currDataTicket) {
-            if (currDataTicket.status !== 1) //comanda fechada
+          const res = await axios.post(`${configs.api_url}/getTicketData`, {idEstablishment: idEstablishment, ticketId: clientIdUrl.id})
+          if(res.data){
+            console.log('aq. vai tomar um mojito')
+            const currDataTicket = res.data?.ticket
+            if (currDataTicket) {
+              if (currDataTicket.status !== 1) //comanda fechada
+                setDataTicket(null)
+              else {
+                console.log('curr', currDataTicket)
+                setDataTicket({...dataTicket, ...currDataTicket})
+              }
+            } else {
               setDataTicket(null)
-            else {
-              console.log('curr', currDataTicket)
-              setDataTicket(currDataTicket)
             }
-          } else {
-            setDataTicket(null)
-          }
+          } 
         }
         catch (e) {
           setDataTicket(null)
@@ -147,21 +124,6 @@ export default function ShoppingCart() {
     getDataTicket()
   }, [clientIdUrl, idEstablishment])
 
-  const saveItemsOrder = async (dataOrder) => {
-    setIsLoading(true)
-    try {
-      const orderItemsRef = collection(db, 'Establishment', idEstablishment, 'Orders')
-      const saveOrder = await addDoc(orderItemsRef, dataOrder)
-      if (saveOrder)
-        return saveOrder
-      return null
-    } catch (e) {
-      console.log(e)
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   useEffect(() => {
     let total = 0
@@ -172,178 +134,91 @@ export default function ShoppingCart() {
   }, [shoopingCart])
 
 
-  const saveTicket = async (dataTicket) => {
-    let copyDataTicket = { ...dataTicket }
-    copyDataTicket.local = `${dataAddress.address}, ${dataAddress.number} - ${dataAddress.neighborhood} - ${dataAddress.city}/${dataAddress.state}`
-    copyDataTicket.name = dataAddress.name
-    copyDataTicket.phone = dataAddress.phoneNumber
-    setDataTicket(copyDataTicket)
-    const ticketRef = collection(db, 'Establishment', idEstablishment, 'Tickets')
-    const saveTicket = await addDoc(ticketRef, copyDataTicket)
-    if (saveTicket) {
-      const dataOrder = {
-        date: new Date(),
-        establishment: idEstablishment,
-        items: shoopingCart,
-        local: copyDataTicket?.local,
-        order_id: saveTicket.id,
-        status: 1,
-        name: copyDataTicket?.name,
-        type: dataTicket?.type,
-        totalOrder: totalOrder,
-        obs: dataAddress?.obs,
-        paymentType: dataAddress?.paymentType,
-        operator: copyDataTicket?.name,
-      }
-      const isSaveOrderItems = await saveItemsOrder(dataOrder)
-      if (isSaveOrderItems) {
-        setConfirmSave(true)
-      } else {
-        alert('erro ao pedir')
-      }
-    }
-  }
-
   const sendOrder = async () => {
-    if (dataTicket) {
-      console.log('dataTicket', dataTicket)
-      if (dataTicket.type === 2) { //Comanda fixa/mesa -> Buscar Id da comanda caso a comanda esteja aberta.
-        const ticketNumber = await getTicketNumber()
-        if (!ticketNumber) {//comanda fechada
-          console.log('sem comanda?')
-          setIsLoading(true)
-          try { //Abre a comanda
-            const ticketRef = collection(db, 'Establishment', idEstablishment, 'Tickets')
-            const saveTicket = await addDoc(ticketRef, dataTicket)
-            if (saveTicket) {
-              const dataOrder = {
-                date: new Date(),
-                establishment: idEstablishment,
-                items: shoopingCart,
-                local: dataTicket?.local,
-                order_id: saveTicket.id,
-                status: 1,
-                name: dataTicket?.name,
-                type: dataTicket?.type,
-                //totalOrder: sumTotalOrder(),
-                obs: dataAddress?.obs,
-                operator: dataTicket?.name
-                // paymentType: dataAddress?.paymentType
-              }
-              const isSaveOrderItems = await saveItemsOrder(dataOrder)
-              if (isSaveOrderItems) {
-                setConfirmSave(true)
-              } else {
-                alert('erro ao pedir')
-              }
-            }
-          } catch (e) {
-            console.log(e)
-          } finally {
-            setIsLoading(false)
-          }
-        } else {
-          console.log('com comanda?')
-          //Comanda aberta, faço somente o pedido
-          const dataOrder = {
-            date: new Date(),
-            establishment: idEstablishment,
-            items: shoopingCart,
-            local: dataTicket?.local,
-            order_id: ticketNumber,
-            status: 1,
-            name: dataTicket?.name,
-            type: dataTicket?.type,
-            //totalOrder: sumTotalOrder(),
-            obs: dataAddress?.obs,
-            operator: dataTicket?.name
-            //  paymentType: dataAddress?.paymentType
-          }
-          const isSaveOrderItems = await saveItemsOrder(dataOrder)
-          if (isSaveOrderItems) {
-            console.log('mandou')
-            setConfirmSave(true)
-          } else {
-            alert('erro ao pedir')
-          }
+    setIsLoading(true)
+    try {
+      const isOnlineCreditPayment =
+        dataTicket?.type === 3 &&
+        dataAddress.paymentMethod === "ONL" &&
+        dataAddress.paymentType === "CRD"
+  
+      if (isOnlineCreditPayment) {
+        const cardToken = await generateCardToken(idEstablishment, cardData)
+        if (!cardToken) {
+          alert('Erro ao processar os dados do cartão. Por favor, tente novamente.')
+          return
         }
-      } else if (clientIdUrl.typeId === '3') {// Delivery
-        setIsLoading(true)
+  
         try {
-          if (dataAddress.paymentMethod === "ONL" && dataAddress.paymentType === "CRD") {
-            const cardToken = await generateCardToken(idEstablishment, cardData)
-            console.log('cardToken: ', cardToken)
-            if (cardToken) {
-              try {
-                const payment = await proccessPayment(idEstablishment, totalOrder, cardData.email, 'Wise Menu', cardToken)
-                if (payment.status === 'approved') {
-                  alert('Pagamento Aprovado!')
-                  try {
-
-                    const paymentData = {
-                      id: payment?.id,
-                      establishmentId: idEstablishment,
-                      status: payment?.status,
-                      status_detail: payment?.status_detail,
-                      transaction_amount: payment?.transaction_amount,
-                      description: payment?.description,
-                      payment_method_id: payment?.payment_method_id,
-                      date_approved: payment?.date_approved,
-                      payer_email: payment?.payer?.email || null,
-                    }
-
-                    axios.post(`${api_url}/savePayment`, paymentData).then(res => {
-                      console.log('ok.', res.data)
-                    }).catch((e) => {
-                      console.log('erro ao salvar pagamento', e)
-                    })
-
-                  } catch (e) {
-                    console.log('Erro', e)
-                  }
-                  saveTicket({...dataTicket, isOnlinePayment: true})
-                } else {
-                  alert('Nâo foi possível concluir o pagamento.')
-                }
-              } catch (error) {
-                alert('Erro ao processar pagamento.')
-                console.log(error)
-              }
-            }
-          } else {
-            saveTicket(dataTicket)
+          const payment = await proccessPayment(
+            idEstablishment,
+            totalOrder,
+            cardData.email,
+            'Wise Menu',
+            cardToken
+          )
+  
+          if (payment.status !== 'approved') {
+            alert('Não foi possível concluir o pagamento. Verifique os dados e tente novamente.')
+            return
           }
-        } catch {
-          alert('Erro ao solicitar o pedido')
-        } finally {
-          setIsLoading(false)
-        }
-      } else {//QrCode || NFC
-        const dataOrder = {
-          date: new Date(),
-          establishment: idEstablishment,
-          items: shoopingCart,
-          local: dataTicket?.local,
-          order_id: clientIdUrl.id,
-          status: 1,
-          name: dataTicket?.name,
-          type: dataTicket?.type,
-          // totalOrder: sumTotalOrder(),
-          obs: dataAddress?.obs,
-          operator: dataTicket?.name,
-          // paymentType: dataAddress?.paymentType
-        }
-        const isSaveOrderItems = await saveItemsOrder(dataOrder)
-        if (isSaveOrderItems) {
-          setConfirmSave(true)
-        } else {
-          alert('erro ao pedir')
+  
+          // Salvar dados do pagamento
+          const paymentData = {
+            id: payment?.id,
+            establishmentId: idEstablishment,
+            status: payment?.status,
+            status_detail: payment?.status_detail,
+            transaction_amount: payment?.transaction_amount,
+            description: payment?.description,
+            payment_method_id: payment?.payment_method_id,
+            date_approved: payment?.date_approved,
+            payer_email: payment?.payer?.email || null,
+          }
+          
+          try {
+            await axios.post(`${api_url}/savePayment`, paymentData)
+            console.log('Pagamento salvo com sucesso.')
+            dataTicket.paymentId = payment?.id
+            dataTicket.isOnlinePayment = true
+          } catch (err) {
+            console.log('Erro ao salvar pagamento:', err)
+          }
+  
+        } catch (error) {
+          alert('Erro ao processar o pagamento. Por favor, tente novamente.')
+          console.log(error)
+          return
         }
       }
-    } else {
-      console.log('sem dataTicket', dataTicket)
+  
+      // Envia o pedido
+      const data = {
+        idEstablishment,
+        dataTicket,
+        shoopingCart,
+        dataAddress,
+        clientIdUrl,
+        totalOrder
+      }
+  
+      try {
+        const res = await axios.post(`${api_url}/sendOrderSecure`, data)
+        if (res.data) {
+          alert('Pedido enviado.')
+          console.log(res.data)
+        }
+      } catch (e) {
+        console.log('Erro ao enviar pedido:', e)
+      }
+  
+    } catch (e) {
+      console.log('Erro geral no envio do pedido:', e)
+    } finally {
+      setIsLoading(false)
     }
   }
+  
 
   const redirectToMenu = () => {
     let urlMenu = `/${idEstablishment}/${clientIdUrl.typeId}`
@@ -390,6 +265,22 @@ export default function ShoppingCart() {
     setCardData((prev) => ({ ...prev, expiry: cleaned }))
   }
 
+  const isInvalidFormSend = () => {
+    if (dataTicket?.type === 3 && (dataTicket.status !== 1 || dataTicket?.establishment !== idEstablishment || !dataAddress?.paymentMethod ||
+      !dataAddress.paymentType)
+    )
+      return true
+
+    if (dataTicket?.type === 3 && (dataAddress.paymentMethod === 'ONL' && dataAddress.paymentType === 'CRD') &&
+      (!cardData.number || !cardData?.name || !cardData.expiry || !cardData.email || !cardData.document || !cardData.cvv))
+      return true
+
+    if (dataTicket.type === 3 && (!dataAddress.address || !dataAddress.number || !dataAddress.neighborhood
+      || !dataAddress.city || !dataAddress.phoneNumber))
+      return true
+    return false
+  }
+
 
   return (
     <div>
@@ -406,7 +297,7 @@ export default function ShoppingCart() {
               variant="contained"
               startIcon={<FlipToBackOutlined />}
               //onClick={() => isAuthenticated ? setOpenModalCart(true) : history.push({pathname:'/login', state:{data: data}})}
-              onClick={() => history.push(localStorage.getItem('establishmentUrl'))}
+              onClick={() => history.push(sessionStorage.getItem('establishmentUrl'))}
             >
               Voltar</Button>
           </div>
@@ -451,378 +342,380 @@ export default function ShoppingCart() {
                         </div>
                       </Card>
                     ))}
-                    <br /><p>Total do pedido: <strong>{formatToCurrencyBR(totalOrder)}</strong></p>
+                    <br />
+                    {dataTicket?.type !== 2 &&
+                      <p>Total do pedido: <strong>{formatToCurrencyBR(totalOrder)}</strong></p>
+                    }
                   </Grid>
                 </Grid>
 
               </Grid>
 
-              <Grid item xs={12} sm={6} md={6}>
-                <Grid container spacing={1} justifyContent="center" alignItems="center" style={{ marginBottom: 30 }}>
-                  <Grid item xs={12} md={8} lg={8}>
-                    <Paper elevation={3} style={{ padding: "20px" }}>
-                      <h4>Dados para entrega</h4>
-
-                      <Grid container spacing={1}>
-
-                        <Grid item lg={12} xs={12}>
-                          <TextField
-                            variant="filled"
-                            label="Nome"
-                            name="name"
-                            fullWidth
-                            style={{ marginBottom: "12px" }}
-                            value={dataAddress.name}
-                            onChange={(e) => {
-                              setDataAddress(prevData => ({
-                                ...prevData,
-                                name: e.target.value
-                              }))
-                            }}
-                          />
-                        </Grid>
-
-                        <Grid item lg={3} xs={12}>
-                          <TextField
-                            variant="filled"
-                            label="CEP"
-                            name="cep"
-                            fullWidth
-                            style={{ marginBottom: "12px" }}
-                            value={dataAddress.zipCode}
-                            onChange={(e) => {
-                              setDataAddress(prevData => ({
-                                ...prevData,
-                                zipCode: e.target.value
-                              }))
-                              if (e.target.value.length === 8) {
-                                getZipCodeInfo(e.target.value)
-                              }
-                            }}
-
-                          />
-                        </Grid>
-                        <Grid item lg={9} xs={12}>
-                          <TextField
-                            variant="filled"
-                            label="Rua"
-                            name="street"
-                            fullWidth
-                            required
-                            style={{ marginBottom: "12px" }}
-                            value={dataAddress.address}
-                            onChange={(e) => {
-                              setDataAddress(prevData => ({
-                                ...prevData,
-                                address: e.target.value
-                              }))
-                            }}
-                          />
-                        </Grid>
-                        <Grid item lg={2} xs={12}>
-                          <TextField
-                            variant="filled"
-                            label="Número"
-                            name="number"
-                            fullWidth
-                            required
-                            style={{ marginBottom: "12px" }}
-                            value={dataAddress.number}
-                            onChange={(e) => {
-                              setDataAddress(prevData => ({
-                                ...prevData,
-                                number: e.target.value
-                              }))
-                            }}
-                          />
-                        </Grid>
-                        <Grid item lg={4} xs={12}>
-                          <TextField
-                            variant="filled"
-                            label="Complemento"
-                            name="complement"
-                            fullWidth
-                            style={{ marginBottom: "12px" }}
-                            value={dataAddress.complement}
-                            onChange={(e) => {
-                              setDataAddress(prevData => ({
-                                ...prevData,
-                                complement: e.target.value
-                              }))
-                            }}
-                          />
-                        </Grid>
-                        <Grid item lg={6} xs={12}>
-                          <TextField
-                            variant="filled"
-                            label="Bairro"
-                            name="neighborhood"
-                            fullWidth
-                            required
-                            style={{ marginBottom: "12px" }}
-                            value={dataAddress.neighborhood}
-                            onChange={(e) => {
-                              setDataAddress(prevData => ({
-                                ...prevData,
-                                neighborhood: e.target.value
-                              }))
-                            }}
-                          />
-                        </Grid>
-                        <Grid item lg={8} xs={12}>
-                          <TextField
-                            variant="filled"
-                            label="Cidade"
-                            name="city"
-                            fullWidth
-                            required
-                            style={{ marginBottom: "12px" }}
-                            value={dataAddress.city}
-                            onChange={(e) => {
-                              setDataAddress(prevData => ({
-                                ...prevData,
-                                city: e.target.value
-                              }))
-                            }}
-                          />
-                        </Grid>
-                        <Grid item lg={4} xs={12}>
-                          <TextField
-                            variant="filled"
-                            label="Estado"
-                            name="state"
-                            fullWidth
-                            required
-                            style={{ marginBottom: "12px" }}
-                            value={dataAddress.state}
-                            onChange={(e) => {
-                              setDataAddress(prevData => ({
-                                ...prevData,
-                                state: e.target.value
-                              }))
-                            }}
-                          />
-                        </Grid>
-                        <Grid item lg={6} xs={12}>
-                          <TextField
-                            variant="filled"
-                            label="Telefone"
-                            name="phone"
-                            fullWidth
-                            required
-                            style={{ marginBottom: "12px" }}
-                            value={dataAddress.phoneNumber}
-                            onChange={(e) => {
-                              setDataAddress(prevData => ({
-                                ...prevData,
-                                phoneNumber: e.target.value
-                              }))
-                            }}
-                          />
-                        </Grid>
-                      </Grid>
-
-
-                    </Paper>
-                    <Grid container spacing={1}>
-                      <Grid item xs={12} lg={6}>
-                        <div style={{ marginLeft: 10, marginTop: 20 }}>
-                          <FormLabel id="radioPaymentType">Tipo de pagamento:</FormLabel>
-                          <RadioGroup
-                            aria-labelledby="radioPaymentType"
-                            defaultValue="CASH"
-                            name="radio-buttons-group"
-                            value={dataAddress.paymentMethod}
-                          >
-                            <FormControlLabel
-                              style={{ marginTop: 0 }}
-                              value="ONL"
-                              control={<Radio />}
-
-                              label="Pagamento online"
-                              onChange={(e) => setDataAddress(prevData => ({
-                                ...prevData,
-                                paymentMethod: e.target.value
-                              }))}
-                            />
-                            <FormControlLabel
-                              style={{ marginTop: -10 }}
-                              value="ENT"
-                              control={<Radio />}
-                              label="Pagar na entrega"
-                              onChange={(e) => setDataAddress(prevData => ({
-                                ...prevData,
-                                paymentMethod: e.target.value
-                              }))}
-                            />
-                          </RadioGroup>
-                        </div>
-                      </Grid>
-                      <br />
-
-
-                      <Grid item xs={12} lg={6}>
-                        {dataAddress.paymentMethod !== "" &&
-                          <div style={{ marginLeft: 10, marginTop: 20 }}>
-                            <FormLabel id="radioPaymentType">Forma de pagamento:</FormLabel>
-                            <RadioGroup
-                              aria-labelledby="radioPaymentType"
-                              defaultValue="CASH"
-                              name="radio-buttons-group2"
-                              value={dataAddress.paymentType}
-                            >
-                              {dataAddress.paymentMethod !== 'ONL' &&
-                                <FormControlLabel
-                                  style={{ marginTop: 0 }}
-                                  value="CASH"
-                                  control={<Radio />}
-                                  label="Dinheiro"
-                                  onChange={(e) => setDataAddress(prevData => ({
-                                    ...prevData,
-                                    paymentType: e.target.value
-                                  }))}
-                                />
-                              }
-                              {dataAddress.paymentMethod !== 'ONL' &&
-                                <FormControlLabel
-                                  style={{ marginTop: -10 }}
-                                  value="DBT"
-                                  control={<Radio />}
-                                  label="Débito"
-                                  onChange={(e) => setDataAddress(prevData => ({
-                                    ...prevData,
-                                    paymentType: e.target.value
-                                  }))}
-                                />
-                              }
-                              <FormControlLabel
-                                style={{ marginTop: -10 }}
-                                value="CRD"
-                                control={<Radio />}
-                                label="Crédito"
-                                onChange={(e) => setDataAddress(prevData => ({
-                                  ...prevData,
-                                  paymentType: e.target.value
-                                }))}
-                              />
-                              <FormControlLabel
-                                style={{ marginTop: -10 }}
-                                value="PIX"
-                                control={<Radio />}
-                                label="Pix"
-                                onChange={(e) => setDataAddress(prevData => ({
-                                  ...prevData,
-                                  paymentType: e.target.value
-                                }))}
-                              />
-                            </RadioGroup>
-                          </div>
-
-                        }
-                      </Grid>
-
-                    </Grid>
-                  </Grid>
-
-                </Grid>
-
-
-
-
-                {dataAddress.paymentType === 'CRD' && dataAddress.paymentMethod === 'ONL' &&
-
-                  <Grid container spacing={1} justifyContent="center" alignItems="center" style={{ marginBottom: 100 }}>
-                    <Grid item xs={12} md={4} lg={8}>
+              {dataTicket?.type === 3 &&
+                <Grid item xs={12} sm={6} md={6}>
+                  <Grid container spacing={1} justifyContent="center" alignItems="center" style={{ marginBottom: 30 }}>
+                    <Grid item xs={12} md={8} lg={8}>
                       <Paper elevation={3} style={{ padding: "20px" }}>
-                        <h4>Pagamento com Cartão de Crédito</h4>
+                        <h4>Dados para entrega</h4>
 
-                        <TextField
-                          variant="filled"
-                          label="Número do Cartão"
-                          name="cardNumber"
-                          fullWidth
-                          style={{ marginBottom: "15px" }}
-                          value={cardData.number}
-                          onChange={(e) => handleCardNumberChange(e.target.value)}
-                        />
-                        <TextField
-                          variant="filled"
-                          label="Nome do Titular"
-                          name="cardHolder"
-                          fullWidth
-                          style={{ marginBottom: "15px" }}
-                          value={cardData.name}
-                          onChange={(e) => {
-                            setCardData(prevData => ({
-                              ...prevData,
-                              name: e.target.value.toUpperCase()
-                            }))
-                          }}
-                        />
-                        <Grid container spacing={2}>
-                          <Grid item xs={6}>
+                        <Grid container spacing={1}>
+
+                          <Grid item lg={12} xs={12}>
                             <TextField
                               variant="filled"
-                              label="Data de Validade (MM/AA)"
-                              name="expiryDate"
+                              label="Nome"
+                              name="name"
                               fullWidth
-                              style={{ marginBottom: "15px" }}
-                              value={cardData.expiry}
-                              onChange={(e) => handleExpiryChange(e.target.value)}
+                              style={{ marginBottom: "12px" }}
+                              value={dataAddress.name}
+                              onChange={(e) => {
+                                setDataAddress(prevData => ({
+                                  ...prevData,
+                                  name: e.target.value
+                                }))
+                              }}
                             />
                           </Grid>
-                          <Grid item xs={6}>
+
+                          <Grid item lg={3} xs={12}>
                             <TextField
                               variant="filled"
-                              label="CVV"
-                              name="cvv"
+                              label="CEP"
+                              name="cep"
                               fullWidth
-                              style={{ marginBottom: "15px" }}
-                              value={cardData.cvv}
+                              style={{ marginBottom: "12px" }}
+                              value={dataAddress.zipCode}
                               onChange={(e) => {
-                                setCardData(prevData => ({
+                                setDataAddress(prevData => ({
                                   ...prevData,
-                                  cvv: e.target.value
+                                  zipCode: e.target.value
+                                }))
+                                if (e.target.value.length === 8) {
+                                  getZipCodeInfo(e.target.value)
+                                }
+                              }}
+
+                            />
+                          </Grid>
+                          <Grid item lg={9} xs={12}>
+                            <TextField
+                              variant="filled"
+                              label="Rua"
+                              name="street"
+                              fullWidth
+                              required
+                              style={{ marginBottom: "12px" }}
+                              value={dataAddress.address}
+                              onChange={(e) => {
+                                setDataAddress(prevData => ({
+                                  ...prevData,
+                                  address: e.target.value
+                                }))
+                              }}
+                            />
+                          </Grid>
+                          <Grid item lg={2} xs={12}>
+                            <TextField
+                              variant="filled"
+                              label="Número"
+                              name="number"
+                              fullWidth
+                              required
+                              style={{ marginBottom: "12px" }}
+                              value={dataAddress.number}
+                              onChange={(e) => {
+                                setDataAddress(prevData => ({
+                                  ...prevData,
+                                  number: e.target.value
+                                }))
+                              }}
+                            />
+                          </Grid>
+                          <Grid item lg={4} xs={12}>
+                            <TextField
+                              variant="filled"
+                              label="Complemento"
+                              name="complement"
+                              fullWidth
+                              style={{ marginBottom: "12px" }}
+                              value={dataAddress.complement}
+                              onChange={(e) => {
+                                setDataAddress(prevData => ({
+                                  ...prevData,
+                                  complement: e.target.value
+                                }))
+                              }}
+                            />
+                          </Grid>
+                          <Grid item lg={6} xs={12}>
+                            <TextField
+                              variant="filled"
+                              label="Bairro"
+                              name="neighborhood"
+                              fullWidth
+                              required
+                              style={{ marginBottom: "12px" }}
+                              value={dataAddress.neighborhood}
+                              onChange={(e) => {
+                                setDataAddress(prevData => ({
+                                  ...prevData,
+                                  neighborhood: e.target.value
+                                }))
+                              }}
+                            />
+                          </Grid>
+                          <Grid item lg={8} xs={12}>
+                            <TextField
+                              variant="filled"
+                              label="Cidade"
+                              name="city"
+                              fullWidth
+                              required
+                              style={{ marginBottom: "12px" }}
+                              value={dataAddress.city}
+                              onChange={(e) => {
+                                setDataAddress(prevData => ({
+                                  ...prevData,
+                                  city: e.target.value
+                                }))
+                              }}
+                            />
+                          </Grid>
+                          <Grid item lg={4} xs={12}>
+                            <TextField
+                              variant="filled"
+                              label="Estado"
+                              name="state"
+                              fullWidth
+                              required
+                              style={{ marginBottom: "12px" }}
+                              value={dataAddress.state}
+                              onChange={(e) => {
+                                setDataAddress(prevData => ({
+                                  ...prevData,
+                                  state: e.target.value
+                                }))
+                              }}
+                            />
+                          </Grid>
+                          <Grid item lg={6} xs={12}>
+                            <TextField
+                              variant="filled"
+                              label="Telefone"
+                              name="phone"
+                              fullWidth
+                              required
+                              style={{ marginBottom: "12px" }}
+                              value={dataAddress.phoneNumber}
+                              onChange={(e) => {
+                                setDataAddress(prevData => ({
+                                  ...prevData,
+                                  phoneNumber: e.target.value
                                 }))
                               }}
                             />
                           </Grid>
                         </Grid>
-                        <TextField
-                          variant="filled"
-                          label="CPF"
-                          name="cpf"
-                          fullWidth
-                          style={{ marginBottom: "15px" }}
-                          value={cardData.document}
-                          onChange={(e) => {
-                            setCardData(prevData => ({
-                              ...prevData,
-                              document: e.target.value
-                            }))
-                          }}
-                        />
-                        <TextField
-                          variant="filled"
-                          type='email'
-                          label="E-mail"
-                          name="email"
-                          fullWidth
-                          style={{ marginBottom: "15px" }}
-                          value={cardData.email}
-                          onChange={(e) => {
-                            setCardData(prevData => ({
-                              ...prevData,
-                              email: e.target.value
-                            }))
-                          }}
-                        />
-                      </Paper>
-                    </Grid>
-                  </Grid>
-                }
 
-              </Grid>
+
+                      </Paper>
+                      <Grid container spacing={1}>
+                        <Grid item xs={12} lg={6}>
+                          <div style={{ marginLeft: 10, marginTop: 20 }}>
+                            <FormLabel id="radioPaymentType">Tipo de pagamento:</FormLabel>
+                            <RadioGroup
+                              aria-labelledby="radioPaymentType"
+                              name="radio-buttons-group"
+                              value={dataAddress.paymentMethod}
+                            >
+                              <FormControlLabel
+                                style={{ marginTop: 0 }}
+                                value="ONL"
+                                control={<Radio />}
+
+                                label="Pagamento online"
+                                onChange={(e) => setDataAddress(prevData => ({
+                                  ...prevData,
+                                  paymentMethod: e.target.value
+                                }))}
+                              />
+                              <FormControlLabel
+                                style={{ marginTop: -10 }}
+                                value="ENT"
+                                control={<Radio />}
+                                label="Pagar na entrega"
+                                onChange={(e) => setDataAddress(prevData => ({
+                                  ...prevData,
+                                  paymentMethod: e.target.value
+                                }))}
+                              />
+                            </RadioGroup>
+                          </div>
+                        </Grid>
+                        <br />
+
+
+                        <Grid item xs={12} lg={6}>
+                          {dataAddress.paymentMethod !== "" &&
+                            <div style={{ marginLeft: 10, marginTop: 20 }}>
+                              <FormLabel id="radioPaymentType">Forma de pagamento:</FormLabel>
+                              <RadioGroup
+                                aria-labelledby="radioPaymentType"
+                                name="radio-buttons-group2"
+                                value={dataAddress.paymentType}
+                              >
+                                {dataAddress.paymentMethod !== 'ONL' &&
+                                  <FormControlLabel
+                                    style={{ marginTop: 0 }}
+                                    value="CASH"
+                                    control={<Radio />}
+                                    label="Dinheiro"
+                                    onChange={(e) => setDataAddress(prevData => ({
+                                      ...prevData,
+                                      paymentType: e.target.value
+                                    }))}
+                                  />
+                                }
+                                {dataAddress.paymentMethod !== 'ONL' &&
+                                  <FormControlLabel
+                                    style={{ marginTop: -10 }}
+                                    value="DBT"
+                                    control={<Radio />}
+                                    label="Débito"
+                                    onChange={(e) => setDataAddress(prevData => ({
+                                      ...prevData,
+                                      paymentType: e.target.value
+                                    }))}
+                                  />
+                                }
+                                <FormControlLabel
+                                  style={{ marginTop: -10 }}
+                                  value="CRD"
+                                  control={<Radio />}
+                                  label="Crédito"
+                                  onChange={(e) => setDataAddress(prevData => ({
+                                    ...prevData,
+                                    paymentType: e.target.value
+                                  }))}
+                                />
+                                <FormControlLabel
+                                  style={{ marginTop: -10 }}
+                                  value="PIX"
+                                  control={<Radio />}
+                                  label="Pix"
+                                  onChange={(e) => setDataAddress(prevData => ({
+                                    ...prevData,
+                                    paymentType: e.target.value
+                                  }))}
+                                />
+                              </RadioGroup>
+                            </div>
+
+                          }
+                        </Grid>
+
+                      </Grid>
+                    </Grid>
+
+                  </Grid>
+
+
+
+
+                  {dataAddress.paymentType === 'CRD' && dataAddress.paymentMethod === 'ONL' &&
+
+                    <Grid container spacing={1} justifyContent="center" alignItems="center" style={{ marginBottom: 100 }}>
+                      <Grid item xs={12} md={4} lg={8}>
+                        <Paper elevation={3} style={{ padding: "20px" }}>
+                          <h4>Pagamento com Cartão de Crédito</h4>
+
+                          <TextField
+                            variant="filled"
+                            label="Número do Cartão"
+                            name="cardNumber"
+                            fullWidth
+                            style={{ marginBottom: "15px" }}
+                            value={cardData.number}
+                            onChange={(e) => handleCardNumberChange(e.target.value)}
+                          />
+                          <TextField
+                            variant="filled"
+                            label="Nome do Titular"
+                            name="cardHolder"
+                            fullWidth
+                            style={{ marginBottom: "15px" }}
+                            value={cardData.name}
+                            onChange={(e) => {
+                              setCardData(prevData => ({
+                                ...prevData,
+                                name: e.target.value.toUpperCase()
+                              }))
+                            }}
+                          />
+                          <Grid container spacing={2}>
+                            <Grid item xs={6}>
+                              <TextField
+                                variant="filled"
+                                label="Data de Validade (MM/AA)"
+                                name="expiryDate"
+                                fullWidth
+                                style={{ marginBottom: "15px" }}
+                                value={cardData.expiry}
+                                onChange={(e) => handleExpiryChange(e.target.value)}
+                              />
+                            </Grid>
+                            <Grid item xs={6}>
+                              <TextField
+                                variant="filled"
+                                label="CVV"
+                                name="cvv"
+                                fullWidth
+                                style={{ marginBottom: "15px" }}
+                                value={cardData.cvv}
+                                onChange={(e) => {
+                                  setCardData(prevData => ({
+                                    ...prevData,
+                                    cvv: e.target.value
+                                  }))
+                                }}
+                              />
+                            </Grid>
+                          </Grid>
+                          <TextField
+                            variant="filled"
+                            label="CPF"
+                            name="cpf"
+                            fullWidth
+                            style={{ marginBottom: "15px" }}
+                            value={cardData.document}
+                            onChange={(e) => {
+                              setCardData(prevData => ({
+                                ...prevData,
+                                document: e.target.value
+                              }))
+                            }}
+                          />
+                          <TextField
+                            variant="filled"
+                            type='email'
+                            label="E-mail"
+                            name="emailAddress"
+                            fullWidth
+                            style={{ marginBottom: "15px" }}
+                            value={cardData.email}
+                            onChange={(e) => {
+                              setCardData(prevData => ({
+                                ...prevData,
+                                email: e.target.value
+                              }))
+                            }}
+                          />
+                        </Paper>
+                      </Grid>
+                    </Grid>
+                  }
+
+                </Grid>}
 
             </Grid>
 
@@ -843,7 +736,7 @@ export default function ShoppingCart() {
                 <Grid item xs={6} md={1} sm={4}>
                   <Button
                     variant="contained"
-                    disabled={!dataTicket || dataTicket.status !== 1 || dataTicket?.establishment !== idEstablishment}
+                    disabled={isInvalidFormSend()}
                     style={{ width: "100%" }}
                     onClick={sendOrder}
                   >Pedir!</Button>
@@ -886,29 +779,17 @@ export default function ShoppingCart() {
           <Button
             autoFocus
             onClick={() => redirectToMenu()}
+          //onClick={() => setConfirmSave(false)}
           >
             OK
           </Button>
         </DialogActions>
       </Dialog>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      <button onClick={() => console.log(totalOrder)}>total</button>
+      {/* <button onClick={() => console.log(dataTicket)}>dataTickett</button>
       <button onClick={() => console.log(shoopingCart)}>ShoppingCart</button>
       <button style={{ marginBottom: 100 }} onClick={() => console.log(dataAddress)}>dataAddress</button>
+      <button onClick={() => console.log(cardData)}>cardDataaa</button>
+      <button onClick={() => console.log(clientIdUrl)}>clientIdUrl</button> */}
     </div >
   )
 }

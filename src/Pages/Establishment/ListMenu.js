@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import { Card, CardActionArea, CardContent, CardMedia, Grid, Typography } from '@mui/material'
-import { db } from '../../firebaseConfig'
-import { getDocs, collection } from 'firebase/firestore'
 import { useHistory, useLocation } from 'react-router-dom';
 import { UserContext } from '../../contexts/UserContext';
+import configs from '../../configs';
+import axios from 'axios';
 
 export default function ListMenu(props) {
 
@@ -12,18 +12,17 @@ export default function ListMenu(props) {
   const history = useHistory();
   const [isLoading, setIsLoading] = useState(false)
   const { dataMenu, setDataMenu, setClientIdUrl, setIdEstablishment, setEstablishmentData } = useContext(UserContext)
-  //let { clientId, estabId, typeId } = props.match.params //id cliente, id estabelecimento, tipo de comanda
-  const { estabId, typeId, clientId,  } = props.match.params;
+  const { estabId, typeId, clientId, } = props.match.params;
+
 
   //Definindo tipo Delivery como padrao caso acessar url somente com o nome (wisemenu.com.br/estabelecimento)
   // const clientId = 'Delivery';
   // const typeId = '3';
 
   useEffect(() => {
-    console.log('loc',location.pathname)
+    console.log('loc', location.pathname)
     // Verifique se a URL já contém clientId e typeId, senão redirecione
-    // if (!location.pathname.includes(clientId) || !location.pathname.includes(typeId)) {
-      if (!typeId && !clientId) {
+    if (!typeId && !clientId) {
       const newPathname = `/${estabId}/3/Delivery`;
       // Redireciona para a nova URL com clientId e typeId
       history.replace(newPathname);
@@ -37,16 +36,10 @@ export default function ListMenu(props) {
 
         setIsLoading(true)
         try {
-          const docRef = collection(db, "Establishment", estabId, "Menu");
-          const docSnap = await getDocs(docRef)
-          const menus = docSnap.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-
-          setDataMenu(menus)
-          console.log('menus', menus)
-          //setEstablishmentData(docSnap.data())
+          const res = await axios.post(`${configs.api_url}/getMenuData`, { idEstablishment: estabId })
+          if (res.data) {
+            setDataMenu(res.data.menu || [])
+          }
         } catch (error) {
           console.log(error)
         } finally { setIsLoading(false) }
@@ -76,7 +69,7 @@ export default function ListMenu(props) {
   useEffect(() => {
     const saveUrlSession = () => {
       if (!hasSavedUrl.current) {
-        localStorage.setItem('establishmentUrl', location.pathname)
+        sessionStorage.setItem('establishmentUrl', location.pathname)
         hasSavedUrl.current = true
       }
     }

@@ -7,6 +7,8 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'
 import { useQuery } from '@tanstack/react-query';
 import { formatToCurrencyBR } from '../../services/functions';
+import configs from '../../configs';
+import axios from 'axios';
 
 export default function ProductList(props) {
   const history = useHistory();
@@ -16,12 +18,14 @@ export default function ProductList(props) {
 
 
   const fetchMenuItems = async (idEstablishment, menuId) => {
-    const docRef = collection(db, "Establishment", idEstablishment, "Menu", menuId, "items");
-    const docSnap = await getDocs(docRef);
-    return docSnap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    // const docRef = collection(db, "Establishment", idEstablishment, "Menu", menuId, "items");
+    // const docSnap = await getDocs(docRef);
+    // return docSnap.docs.map((doc) => ({
+    //   id: doc.id,
+    //   ...doc.data(),
+    // }));
+    const res = await axios.post(`${configs.api_url}/getMenuItems`, {idEstablishment: idEstablishment, menuId: menuId})
+    return res.data?.items
   };
 
   const { data: dataProducts, isLoading } = useQuery({
