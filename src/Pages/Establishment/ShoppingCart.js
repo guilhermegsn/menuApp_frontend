@@ -95,26 +95,24 @@ export default function ShoppingCart() {
   useEffect(() => {
     const getDataTicket = async () => {
       console.log(clientIdUrl)
-      if (clientIdUrl.typeId === '1' || clientIdUrl.typeId === '4') {//Ticket QrCode || NFC
+      if (clientIdUrl.typeId === '1' || clientIdUrl.typeId === '4') {
         setIsLoading(true)
-        try { //Pesquisa dados do ticket
-          const res = await axios.post(`${configs.api_url}/getTicketData`, { idEstablishment: idEstablishment, ticketId: clientIdUrl.id })
+        try {
+          const res = await axios.post(`${configs.api_url}/getTicketData`, { idEstablishment, ticketId: clientIdUrl.id })
           if (res.data) {
-            console.log('aq. vai tomar um mojito')
             const currDataTicket = res.data?.ticket
             if (currDataTicket) {
-              if (currDataTicket.status !== 1) //comanda fechada
+              if (currDataTicket.status !== 1) {
                 setDataTicket(null)
-              else {
+              } else {
                 console.log('curr', currDataTicket)
-                setDataTicket({ ...dataTicket, ...currDataTicket })
+                setDataTicket(currDataTicket) // <- evita spread de estado anterior
               }
             } else {
               setDataTicket(null)
             }
           }
-        }
-        catch (e) {
+        } catch (e) {
           setDataTicket(null)
           console.log('erro..', e)
         } finally {
@@ -122,8 +120,10 @@ export default function ShoppingCart() {
         }
       }
     }
+  
     getDataTicket()
-  }, [clientIdUrl, idEstablishment, dataTicket])
+  }, [clientIdUrl, idEstablishment])
+  
 
 
   useEffect(() => {
@@ -265,22 +265,6 @@ export default function ShoppingCart() {
     }
     // Atualiza o estado
     setCardData((prev) => ({ ...prev, expiry: cleaned }))
-  }
-
-  const isInvalidFormSend = () => {
-    if (dataTicket?.type === 3 && (dataTicket.status !== 1 || dataTicket?.establishment !== idEstablishment || !dataAddress?.paymentMethod ||
-      !dataAddress.paymentType)
-    )
-      return true
-
-    if (dataTicket?.type === 3 && (dataAddress.paymentMethod === 'ONL' && dataAddress.paymentType === 'CRD') &&
-      (!cardData.number || !cardData?.name || !cardData.expiry || !cardData.email || !cardData.document || !cardData.cvv))
-      return true
-
-    if (dataTicket.type === 3 && (!dataAddress.address || !dataAddress.number || !dataAddress.neighborhood
-      || !dataAddress.city || !dataAddress.phoneNumber))
-      return true
-    return false
   }
 
 
@@ -793,7 +777,6 @@ export default function ShoppingCart() {
                 <Grid item xs={6} md={1} sm={4}>
                   <Button
                     variant="contained"
-                    disabled={isInvalidFormSend()}
                     style={{ width: "100%" }}
                     onClick={() => {
                       if (!isPaymentView)
