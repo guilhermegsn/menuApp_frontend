@@ -1,0 +1,69 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* permite que cresça */
+  flex-direction: column; /* garante empilhamento */
+  padding: 15px; /* espaço interno opcional */
+}
+
+  
+  .login-box {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .subtext {
+    font-size: 13px;
+    color: grey;
+   margin-top: -10px;
+  }
+
+  .subTitle {
+    font-size: 15px;
+    font-weight:bolder;
+    color: black;
+   margin-top: -10px;
+  }
+
+  .limitText {
+    font-size: 16px;
+    font-weight:300;
+    color: black;
+   margin-top: -10px;
+  }
+
+  .center-button {
+    display: block;
+    margin: 0 auto; /* centraliza horizontalmente */
+  }
+
+  .btn {
+    width: 300px;
+    background-color: #229954;
+    border-radius: 8px;
+    margin: 15px;
+    display: flex;          /* para alinhar o conteúdo interno */
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+  
+  .btnText {
+    text-align: center;
+    color: white;
+    font-size: 17px;
+    font-weight: bolder;
+  }
+  
+
+

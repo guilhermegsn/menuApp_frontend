@@ -8,10 +8,11 @@ import { Route, Switch } from 'react-router-dom';
 // import EstablishmentList from './Pages/Establishment/EstablishmentList';
 // import MenuRegistry from './Pages/Establishment/MenuRegistry';
 // import MenuList from './Pages/Establishment/MenuList';
-import Login from './Pages/User/Login';
 import ShoppingCart from './Pages/Establishment/ShoppingCart';
 import ListMenu from './Pages/Establishment/ListMenu';
 import ProductList from './Pages/Establishment/ProductList';
+import Signature from './Pages/User/Signature';
+import PaymentSignature from './Pages/User/PaymentSignature';
 
 export default function Routes() {
   return (
@@ -34,10 +35,7 @@ export default function Routes() {
         {/* <Route exact path='/menu/:estabId/:typeId/:clientId' component={ListMenu} />
         <Route exact path='/menu/:estabId/:typeId/:clientId/products/:menuId' component={ProductList} /> */}
 
-        <Route exact path='/shopping-cart' component={ShoppingCart} />
-        <Route exact path='/:estabId' component={ListMenu} />
-        <Route exact path='/:estabId/:typeId/:clientId' component={ListMenu} />
-        <Route exact path='/:estabId/:typeId/:clientId/products/:menuId' component={ProductList} />
+       
 
 
 
@@ -53,14 +51,17 @@ export default function Routes() {
         <Route exact path='/menu/:estabId/:4/:nfc/products/:menuId/:clientId' component={ProductList} />
          */}
 
-
-
-
         {/* <Route exact path='/menu/:estabId/products/:menuId' component={ProductList} /> */}
 
-        <Route exact path='/login' component={Login} />
+        {/* <Route exact path='/login' component={Login} /> */}
         {/* <Route exact path='/shopping-cart' component={ShoppingCart} /> */}
         <Route exact path='/shopping-cart/:estabId/:clientId' component={ShoppingCart} />
+        <Route exact path='/shopping-cart' component={ShoppingCart} />
+        <Route exact path='/:estabId' component={ListMenu} />
+        <Route exact path='/:estabId/assinatura' component={Signature} />
+        <Route exact path='/:estabId/assinatura/pagamento' component={PaymentSignature} />
+        <Route exact path='/:estabId/:typeId/:clientId' component={ListMenu} />
+        <Route exact path='/:estabId/:typeId/:clientId/products/:menuId' component={ProductList} />
       </Switch>
     </div>
   );

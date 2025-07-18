@@ -20,7 +20,7 @@ export default function Login() {
 
   useEffect(() => {
     if(isAuthenticated){
-      history.push('/establishment/menu/list')
+      history.push('/assinatura')
     }
   }, [history, isAuthenticated])
 

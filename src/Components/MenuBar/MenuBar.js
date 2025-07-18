@@ -12,14 +12,14 @@ import {
   Toolbar,
   Typography
 } from '@mui/material';
-import { BookOnline, LocationCity, Menu, ShoppingCart } from '@mui/icons-material';
+import { BookOnline, LocationCity, Login, Logout, Menu, ShoppingCart } from '@mui/icons-material';
 import { useHistory } from 'react-router-dom';
 import { UserContext } from '../../contexts/UserContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'
 
 export default function MenuBar() {
-  const { isAuthenticated, dataUser, shoopingCart, establishmentData, setEstablishmentData, clientIdUrl, idEstablishment } = useContext(UserContext)
+  const { isAuthenticated, dataUser, shoopingCart, establishmentData, setEstablishmentData, clientIdUrl, idEstablishment, logout } = useContext(UserContext)
   const [open, setOpen] = useState(false);
   const history = useHistory();
   const userUrl = sessionStorage.getItem('establishmentUrl')
@@ -78,37 +78,24 @@ export default function MenuBar() {
         <List style={{ width: "15em", marginTop: "70px" }}>
           {isAuthenticated &&
             <p style={{ marginLeft: "15px" }}> Bem vindo(a)! {dataUser?.email}</p>}
-          <ListItem onClick={() => enterPage(userUrl)}>
-            <ListItemIcon>
-              <BookOnline />
-            </ListItemIcon>
-            <ListItemText primary="Cardápio" />
-          </ListItem>
-          {/* 
-          <ListItem onClick={() => console.log(dataUser)}>
-            <ListItemIcon>
-              <VerifiedUser />
-            </ListItemIcon>
-            <ListItemText primary="User" />
-          </ListItem> */}
-          <ListItem onClick={() => enterPage('/shopping-cart')}>
-            <ListItemIcon>
-              <ShoppingCart />
-            </ListItemIcon>
-            <ListItemText primary="Carrinho" />
-          </ListItem>
-
+          {userUrl &&
+            <ListItem onClick={() => enterPage(userUrl)}>
+              <ListItemIcon>
+                <BookOnline />
+              </ListItemIcon>
+              <ListItemText primary="Cardápio" />
+            </ListItem>
+          }
+          {userUrl &&
+            <ListItem onClick={() => enterPage('/shopping-cart')}>
+              <ListItemIcon>
+                <ShoppingCart />
+              </ListItemIcon>
+              <ListItemText primary="Carrinho" />
+            </ListItem>
+          }
           {/* {isAuthenticated ?
             <>
-
-
-              <ListItem onClick={() => [history.push('/orders')]}>
-                <ListItemIcon>
-                  <ChecklistRtl />
-                </ListItemIcon>
-                <ListItemText primary="Meus pedidos" />
-              </ListItem>
-
               <ListItem onClick={() => [logout(), history.push('/login'), setOpen(false)]}>
                 <ListItemIcon>
                   <Logout />
@@ -123,7 +110,6 @@ export default function MenuBar() {
               </ListItemIcon>
               <ListItemText primary="Entrar" />
             </ListItem>
-
           } */}
 
           <ListItem >
@@ -134,7 +120,7 @@ export default function MenuBar() {
           </ListItem>
         </List>
 
-        
+
         {/* <button onClick={()=> console.log(isAuthenticated)}>isAuthenticated</button>
         <button onClick={()=> console.log(dataUser)}>dataUser</button>
         <button onClick={()=> console.log(userUrl)}>userUrl</button>
