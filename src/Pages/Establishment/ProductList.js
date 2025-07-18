@@ -13,7 +13,7 @@ export default function ProductList(props) {
   const { menuId } = props.match.params
   const { dataMenu, idEstablishment } = useContext(UserContext)
   const { shoopingCart, setShoppingCart } = useContext(UserContext)
-
+  const menuIndex = dataMenu?.findIndex(item => item.id === menuId)
 
   const fetchMenuItems = async (idEstablishment, menuId) => {
     // const docRef = collection(db, "Establishment", idEstablishment, "Menu", menuId, "items");
@@ -22,7 +22,7 @@ export default function ProductList(props) {
     //   id: doc.id,
     //   ...doc.data(),
     // }));
-    const res = await axios.post(`${configs.api_url}/getMenuItems`, {idEstablishment: idEstablishment, menuId: menuId})
+    const res = await axios.post(`${configs.api_url}/getMenuItems`, { idEstablishment: idEstablishment, menuId: menuId })
     return res.data?.items
   };
 
@@ -85,7 +85,8 @@ export default function ProductList(props) {
       {isLoading ? <center><CircularProgress /></center>
         :
         <div>
-          <h2>{dataMenu?.menuName}</h2>
+          <img src={dataMenu[menuIndex]?.imageUrl} width={'100%'} height={'auto'} alt="Minha Imagem" />
+          <h2 onClick={() => console.log(dataMenu)}>{dataMenu[menuIndex]?.menuName}</h2>
           <div style={{ marginBottom: 70 }}>
             <Grid container spacing={2} >
               {

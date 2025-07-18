@@ -6,7 +6,7 @@ import { useHistory } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
-import { formatToCurrencyBR, generateCardToken, proccessPayment } from '../../services/functions';
+import { formatToCurrencyBR, formatToDoubleBR, generateCardToken, proccessPayment } from '../../services/functions';
 import configs from '../../configs';
 
 export default function ShoppingCart() {
@@ -17,6 +17,7 @@ export default function ShoppingCart() {
   const { shoopingCart, setShoppingCart } = useContext(UserContext)
   const [confirmSave, setConfirmSave] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isPaymentView, setIsPaymentView] = useState(false)
   const [dataTicket, setDataTicket] = useState({
     establishment: idEstablishment,
     local: clientIdUrl?.id,
@@ -140,8 +141,8 @@ export default function ShoppingCart() {
       const isOnlineCreditPayment =
         dataTicket.type === 5 ||
         (dataTicket.type === 3 &&
-        dataAddress.paymentMethod === "ONL" &&
-        dataAddress.paymentType === "CRD")
+          dataAddress.paymentMethod === "ONL" &&
+          dataAddress.paymentType === "CRD")
 
       if (isOnlineCreditPayment) {
         const cardToken = await generateCardToken(idEstablishment, cardData)
@@ -313,46 +314,87 @@ export default function ShoppingCart() {
               <Grid item xs={12} sm={6} md={6}>
 
                 <Grid container spacing={1} justifyContent="center" alignItems="center" style={{ marginBottom: 30 }}>
-                  <Grid item xs={12} md={8} lg={8}>
-                    {shoopingCart.map((item, index) => (
+
+                  {isPaymentView ?
+
+                    <Grid item xs={12} md={8} lg={8}>
                       <Card style={{ padding: "15px", marginTop: 10 }}>
-                        <div key={index} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <div>
-                            <p>{item.name}</p>
-                            <p>{formatToCurrencyBR(item.price)}</p>
+                        {/* Cabeçalho */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', marginBottom: '10px' }}>
+                          <p style={{ fontSize: 14, margin: 0, width: '10%' }}>#</p>
+                          <p style={{ fontSize: 14, margin: 0, width: '50%' }}>Produto</p>
+                          <p style={{ fontSize: 14, margin: 0, width: '15%', textAlign: 'center' }}>Qtde</p>
+                          <p style={{ fontSize: 14, margin: 0, width: '25%', textAlign: 'right' }}>Valor</p>
+                        </div>
+
+                        {/* Lista de Itens */}
+                        {shoopingCart.map((item, index) => (
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <p style={{ fontSize: 14, margin: 0, width: '10%' }}>{index + 1}</p>
+                            <p style={{ fontSize: 14, margin: 0, width: '50%' }}>{item?.name}</p>
+                            <p style={{ fontSize: 14, margin: 0, width: '15%', textAlign: 'center' }}>{item?.qty}</p>
+                            <p style={{ fontSize: 14, margin: 0, width: '25%', textAlign: 'right' }}>{formatToDoubleBR(item?.price)}</p>
                           </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ marginTop: "15px" }}>
-                              <IconButton
-                                color="primary"
-                                aria-label="remove"
-                                onClick={() => removeShoppingCart(item.idItem)}
-                              >
-                                <HorizontalRule />
-                              </IconButton>
-                              {item.qty}
-                              <IconButton
-                                color="primary"
-                                aria-label="add"
-                                onClick={() => addShoppingCart(item.idItem)}
-                              >
-                                <Add />
-                              </IconButton>
-                            </div>
-                          </div>
+                        ))}
+
+                        {/* Linha do Total */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', marginTop: '20px', borderTop: '2px solid #000', paddingTop: '10px' }}>
+                          <p style={{ fontSize: 13, margin: 0, width: '10%' }}></p>
+                          <p style={{ fontSize: 13, margin: 0, width: '50%' }}>TOTAL</p>
+                          <p style={{ fontSize: 13, margin: 0, width: '15%', textAlign: 'center' }}></p>
+                          <p style={{ fontSize: 13, margin: 0, width: '25%', textAlign: 'right' }}>
+                            {formatToCurrencyBR(shoopingCart.reduce((total, item) => total + (item?.price * item?.qty), 0))}
+                          </p>
                         </div>
                       </Card>
-                    ))}
-                    <br />
-                    {dataTicket?.type !== 2 &&
-                      <p>Total do pedido: <strong>{formatToCurrencyBR(totalOrder)}</strong></p>
-                    }
-                  </Grid>
+
+
+                    </Grid>
+
+
+                    :
+
+                    <Grid item xs={12} md={8} lg={8}>
+                      {shoopingCart.map((item, index) => (
+                        <Card style={{ padding: "15px", marginTop: 10 }}>
+                          <div key={index} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <div>
+                              <p>{item.name}</p>
+                              <p>{formatToCurrencyBR(item.price)}</p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ marginTop: "15px" }}>
+                                <IconButton
+                                  color="primary"
+                                  aria-label="remove"
+                                  onClick={() => removeShoppingCart(item.idItem)}
+                                >
+                                  <HorizontalRule />
+                                </IconButton>
+                                {item.qty}
+                                <IconButton
+                                  color="primary"
+                                  aria-label="add"
+                                  onClick={() => addShoppingCart(item.idItem)}
+                                >
+                                  <Add />
+                                </IconButton>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                      <br />
+                      {dataTicket?.type !== 2 &&
+                        <p style={{marginBottom: 50}}>Total do pedido: <strong>{formatToCurrencyBR(totalOrder)}</strong></p>
+                      }
+                    </Grid>
+                  }
                 </Grid>
 
               </Grid>
 
-              {(dataTicket?.type === 3 || dataTicket?.type === 5) &&
+              {isPaymentView && (dataTicket?.type === 3 || dataTicket?.type === 5) &&
                 <Grid item xs={12} sm={6} md={6}>
                   <Grid container spacing={1} justifyContent="center" alignItems="center" style={{ marginBottom: 30 }}>
                     <Grid item xs={12} md={8} lg={8}>
@@ -740,7 +782,12 @@ export default function ShoppingCart() {
                   <Button
                     variant="contained"
                     style={{ width: "100%" }}
-                    onClick={() => history.goBack()}
+                    onClick={() => {
+                      if (isPaymentView)
+                        setIsPaymentView(false)
+                      else
+                        history.goBack()
+                    }}
                   >Voltar</Button>
                 </Grid>
                 <Grid item xs={6} md={1} sm={4}>
@@ -748,8 +795,13 @@ export default function ShoppingCart() {
                     variant="contained"
                     disabled={isInvalidFormSend()}
                     style={{ width: "100%" }}
-                    onClick={sendOrder}
-                  >Pedir!</Button>
+                    onClick={() => {
+                      if (!isPaymentView)
+                        setIsPaymentView(true)
+                      else
+                        sendOrder()
+                    }}
+                  >{isPaymentView ? 'Pedir!' : 'Próximo'}</Button>
                 </Grid>
               </Grid>
             </div>
