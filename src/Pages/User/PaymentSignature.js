@@ -1,5 +1,5 @@
-import React, { useContext, useState } from 'react'
-import { Grid, Paper, TextField } from '@mui/material'
+import React, { useState } from 'react'
+import { CircularProgress, Grid, Paper, TextField } from '@mui/material'
 import './Signature.css'
 import { createSubscription, generateCardToken } from '../../services/MercadoPago'
 
@@ -187,7 +187,7 @@ export default function PaymentSignature(props) {
             className={'btn'}
             onClick={() => subscribe()}
           >
-            <p className={'btnText'}>Assinar</p>
+            <p className={'btnText'}> {isLoading && <CircularProgress color="inherit" size={15} />} Assinar</p>
           </div>
         </Grid>
 

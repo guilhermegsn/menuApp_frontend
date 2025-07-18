@@ -12,14 +12,14 @@ import {
   Toolbar,
   Typography
 } from '@mui/material';
-import { BookOnline, LocationCity, Login, Logout, Menu, ShoppingCart } from '@mui/icons-material';
+import { BookOnline, LocationCity, Menu, ShoppingCart } from '@mui/icons-material';
 import { useHistory } from 'react-router-dom';
 import { UserContext } from '../../contexts/UserContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'
 
 export default function MenuBar() {
-  const { isAuthenticated, dataUser, shoopingCart, establishmentData, setEstablishmentData, clientIdUrl, idEstablishment, logout } = useContext(UserContext)
+  const { isAuthenticated, dataUser, shoopingCart, establishmentData, setEstablishmentData, clientIdUrl, idEstablishment } = useContext(UserContext)
   const [open, setOpen] = useState(false);
   const history = useHistory();
   const userUrl = sessionStorage.getItem('establishmentUrl')
