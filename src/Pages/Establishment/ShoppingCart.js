@@ -1,5 +1,5 @@
 import { Add, CheckCircle, FlipToBackOutlined, HorizontalRule, RemoveShoppingCart } from '@mui/icons-material'
-import { Button, Card, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel, FormLabel, Grid, IconButton, Paper, Radio, RadioGroup, TextField, Typography } from '@mui/material'
+import { Button, Card, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Grid, IconButton, Paper, TextField, Typography } from '@mui/material'
 import React, { useContext, useEffect, useState } from 'react'
 import { UserContext } from '../../contexts/UserContext'
 import { useHistory } from 'react-router-dom';
@@ -135,112 +135,101 @@ export default function ShoppingCart() {
   }, [shoopingCart])
 
 
-  const sendOrder = async () => {
-    setIsLoading(true)
-    try {
-      const isOnlineCreditPayment =
-        dataTicket.type === 5 ||
-        (dataTicket.type === 3 &&
-          dataAddress.paymentMethod === "ONL" &&
-          dataAddress.paymentType === "CRD")
+  // const sendOrder = async () => {
+  //   setIsLoading(true)
+  //   try {
+  //     const isOnlineCreditPayment =
+  //       dataTicket.type === 5 ||
+  //       (dataTicket.type === 3 &&
+  //         dataAddress.paymentMethod === "ONL" &&
+  //         dataAddress.paymentType === "CRD")
 
-      if (isOnlineCreditPayment) {
-        const cardToken = await generateCardToken(idEstablishment, cardData)
-        if (!cardToken) {
-          alert('Erro ao processar os dados do cartão. Por favor, tente novamente.')
-          return
-        }
+  //     if (isOnlineCreditPayment) {
+  //       const cardToken = await generateCardToken(idEstablishment, cardData)
+  //       if (!cardToken) {
+  //         alert('Erro ao processar os dados do cartão. Por favor, tente novamente.')
+  //         return
+  //       }
 
-        try {
-          const payment = await proccessPayment(
-            idEstablishment,
-            totalOrder,
-            cardData.email,
-            'Wise Menu',
-            cardToken
-          )
+  //       try {
+  //         const payment = await proccessPayment(
+  //           idEstablishment,
+  //           totalOrder,
+  //           cardData.email,
+  //           'Wise Menu',
+  //           cardToken
+  //         )
 
-          if (payment.status !== 'approved') {
-            alert('Não foi possível concluir o pagamento. Verifique os dados e tente novamente.')
-            return
-          }
+  //         if (payment.status !== 'approved') {
+  //           alert('Não foi possível concluir o pagamento. Verifique os dados e tente novamente.')
+  //           return
+  //         }
 
-          // Salvar dados do pagamento
-          const paymentData = {
-            id: payment?.id,
-            establishmentId: idEstablishment,
-            status: payment?.status,
-            status_detail: payment?.status_detail,
-            transaction_amount: payment?.transaction_amount,
-            description: payment?.description,
-            payment_method_id: payment?.payment_method_id,
-            date_approved: payment?.date_approved,
-            payer_email: payment?.payer?.email || null,
-          }
+  //         // Salvar dados do pagamento
+  //         const paymentData = {
+  //           id: payment?.id,
+  //           establishmentId: idEstablishment,
+  //           status: payment?.status,
+  //           status_detail: payment?.status_detail,
+  //           transaction_amount: payment?.transaction_amount,
+  //           description: payment?.description,
+  //           payment_method_id: payment?.payment_method_id,
+  //           date_approved: payment?.date_approved,
+  //           payer_email: payment?.payer?.email || null,
+  //         }
 
-          try {
-            await axios.post(`${api_url}/savePayment`, paymentData)
-            console.log('Pagamento salvo com sucesso.')
-            dataTicket.paymentId = payment?.id
-            dataTicket.isOnlinePayment = true
-          } catch (err) {
-            console.log('Erro ao salvar pagamento:', err)
-          }
+  //         try {
+  //           await axios.post(`${api_url}/savePayment`, paymentData)
+  //           console.log('Pagamento salvo com sucesso.')
+  //           dataTicket.paymentId = payment?.id
+  //           dataTicket.isOnlinePayment = true
+  //         } catch (err) {
+  //           console.log('Erro ao salvar pagamento:', err)
+  //         }
 
-        } catch (error) {
-          alert('Erro ao processar o pagamento. Por favor, tente novamente.')
-          console.log(error)
-          return
-        }
-      }
+  //       } catch (error) {
+  //         alert('Erro ao processar o pagamento. Por favor, tente novamente.')
+  //         console.log(error)
+  //         return
+  //       }
+  //     }
 
-      // Envia o pedido
-      const data = {
-        idEstablishment,
-        dataTicket,
-        shoopingCart,
-        dataAddress,
-        clientIdUrl,
-        totalOrder
-      }
+  //     // Envia o pedido
+  //     const data = {
+  //       idEstablishment,
+  //       dataTicket,
+  //       shoopingCart,
+  //       dataAddress,
+  //       clientIdUrl,
+  //       totalOrder
+  //     }
 
-      try {
-        const res = await axios.post(`${api_url}/sendOrderSecure`, data)
-        if (res.data) {
-          alert('Pedido enviado.')
-          console.log(res.data)
-        }
-      } catch (e) {
-        console.log('Erro ao enviar pedido:', e)
-      }
+  //     try {
+  //       const res = await axios.post(`${api_url}/sendOrderSecure`, data)
+  //       if (res.data) {
+  //         alert('Pedido enviado.')
+  //         console.log(res.data)
+  //       }
+  //     } catch (e) {
+  //       console.log('Erro ao enviar pedido:', e)
+  //     }
 
-    } catch (e) {
-      console.log('Erro geral no envio do pedido:', e)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  //   } catch (e) {
+  //     console.log('Erro geral no envio do pedido:', e)
+  //   } finally {
+  //     setIsLoading(false)
+  //   }
+  // }
 
   const sendDirectOrder = async () => {
-    //Obtem dados cliente e do carrinho
-    //Obtem cardToken
-    
-    //Enviar dados cliente e apenas dados de id do produto e qtde.
-    //Enviar cardToken
-
-    //Recebe dados do cliente e carrinho 
-    //Obter preço dos produtos pedidos
-    //Calcular total
-    //Enviar pagamento com o cardToken 
-
     setIsLoading(true)
     try {
-      
-        const cardToken = await generateCardToken(idEstablishment, cardData)
-        if (!cardToken) {
-          alert('Erro ao processar os dados do cartão. Por favor, tente novamente.')
-          return
-        }
+
+      const cardToken = await generateCardToken(idEstablishment, cardData)
+      if (!cardToken) {
+        alert('Erro ao processar os dados do cartão. Por favor, tente novamente.')
+        return
+      }
 
       // Envia o pedido
       const data = {
@@ -818,7 +807,7 @@ export default function ShoppingCart() {
                       if (!isPaymentView)
                         setIsPaymentView(true)
                       else
-                      sendDirectOrder() //sendOrder()
+                        sendDirectOrder() //sendOrder()
                     }}
                   >{isPaymentView ? 'Enviar pedido' : 'Próximo'}</Button>
                 </Grid>
