@@ -85,7 +85,16 @@ export default function ProductList(props) {
       {isLoading ? <center><CircularProgress /></center>
         :
         <div>
-          <img src={dataMenu[menuIndex]?.imageUrl} width={'100%'} height={'auto'} alt="Minha Imagem" />
+          <img
+            src={dataMenu[menuIndex]?.imageUrl}
+            className="responsive-image"
+            alt="Minha Imagem"
+            style={{
+              width: '100%',
+              maxHeight: 200
+            }}
+          />
+
           <h2 onClick={() => console.log(dataMenu)}>{dataMenu[menuIndex]?.menuName}</h2>
           <div style={{ marginBottom: 70 }}>
             <Grid container spacing={2} >

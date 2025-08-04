@@ -13,6 +13,7 @@ import ListMenu from './Pages/Establishment/ListMenu';
 import ProductList from './Pages/Establishment/ProductList';
 import Signature from './Pages/User/Signature';
 import PaymentSignature from './Pages/User/PaymentSignature';
+import QrCodeGenerate from './Pages/Establishment/QrCodeGenerate';
 
 export default function Routes() {
   return (
@@ -58,10 +59,12 @@ export default function Routes() {
         <Route exact path='/shopping-cart/:estabId/:clientId' component={ShoppingCart} />
         <Route exact path='/shopping-cart' component={ShoppingCart} />
         <Route exact path='/:estabId' component={ListMenu} />
+        <Route exact path='/:estabId/qrcode/:type/:estabName' component={QrCodeGenerate} />
         <Route exact path='/:estabId/assinatura' component={Signature} />
         <Route exact path='/:estabId/assinatura/pagamento' component={PaymentSignature} />
         <Route exact path='/:estabId/:typeId/:clientId' component={ListMenu} />
         <Route exact path='/:estabId/:typeId/:clientId/products/:menuId' component={ProductList} />
+        
       </Switch>
     </div>
   );

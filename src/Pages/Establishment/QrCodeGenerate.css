@@ -1,0 +1,13 @@
+@media print {
+    /* Oculta tudo que tiver essa classe na impressão */
+    .no-print {
+      display: none !important;
+    }
+  
+    /* Remove margens e padding da página para impressão limpa */
+    body {
+      margin: 0;
+      padding: 0;
+    }
+  }
+  

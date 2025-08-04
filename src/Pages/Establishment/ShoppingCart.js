@@ -120,10 +120,10 @@ export default function ShoppingCart() {
         }
       }
     }
-  
+
     getDataTicket()
   }, [clientIdUrl, idEstablishment])
-  
+
 
 
   useEffect(() => {
@@ -212,6 +212,55 @@ export default function ShoppingCart() {
         }
       } catch (e) {
         console.log('Erro ao enviar pedido:', e)
+      }
+
+    } catch (e) {
+      console.log('Erro geral no envio do pedido:', e)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const sendDirectOrder = async () => {
+    //Obtem dados cliente e do carrinho
+    //Obtem cardToken
+    
+    //Enviar dados cliente e apenas dados de id do produto e qtde.
+    //Enviar cardToken
+
+    //Recebe dados do cliente e carrinho 
+    //Obter preço dos produtos pedidos
+    //Calcular total
+    //Enviar pagamento com o cardToken 
+
+    setIsLoading(true)
+    try {
+      
+        const cardToken = await generateCardToken(idEstablishment, cardData)
+        if (!cardToken) {
+          alert('Erro ao processar os dados do cartão. Por favor, tente novamente.')
+          return
+        }
+
+      // Envia o pedido
+      const data = {
+        idEstablishment,
+        dataTicket,
+        shoopingCart,
+        dataAddress,
+        clientIdUrl,
+        cardToken: cardToken.id
+      }
+
+      try {
+        const res = await axios.post(`${api_url}/sendSimplifiedOrder`, data)
+        if (res.data) {
+          alert('Pedido enviado.')
+          console.log(res.data)
+        }
+      } catch (e) {
+        console.log('Erro ao enviar pedido:', e)
+        alert('erro')
       }
 
     } catch (e) {
@@ -370,7 +419,7 @@ export default function ShoppingCart() {
                       ))}
                       <br />
                       {dataTicket?.type !== 2 &&
-                        <p style={{marginBottom: 50}}>Total do pedido: <strong>{formatToCurrencyBR(totalOrder)}</strong></p>
+                        <p style={{ marginBottom: 50 }}>Total do pedido: <strong>{formatToCurrencyBR(totalOrder)}</strong></p>
                       }
                     </Grid>
                   }
@@ -545,15 +594,11 @@ export default function ShoppingCart() {
                                 />
                               </Grid>
                             </>
-
-
                           }
-
                         </Grid>
-
-
                       </Paper>
-                      <Grid container spacing={1}>
+
+                      {/* <Grid container spacing={1}>
                         {dataTicket?.type === 3 && //Delivery
                           <Grid item xs={12} lg={6}>
                             <div style={{ marginLeft: 10, marginTop: 20 }}>
@@ -589,8 +634,6 @@ export default function ShoppingCart() {
                           </Grid>
                         }
                         <br />
-
-
                         <Grid item xs={12} lg={6}>
                           {dataAddress.paymentMethod !== "" &&
                             <div style={{ marginLeft: 10, marginTop: 20 }}>
@@ -646,111 +689,104 @@ export default function ShoppingCart() {
                                 />
                               </RadioGroup>
                             </div>
-
                           }
                         </Grid>
-
-                      </Grid>
+                      </Grid> */}
                     </Grid>
-
                   </Grid>
 
 
+                  {/* {(dataTicket.type === 5 || (dataAddress.paymentType === 'CRD' && dataAddress.paymentMethod === 'ONL')) && */}
+                  <Grid container spacing={1} justifyContent="center" alignItems="center" style={{ marginBottom: 100 }}>
+                    <Grid item xs={12} md={4} lg={8}>
+                      <Paper elevation={3} style={{ padding: "20px" }}>
+                        <h4>Pagamento com Cartão de Crédito</h4>
 
-
-                  {(dataTicket.type === 5 || (dataAddress.paymentType === 'CRD' && dataAddress.paymentMethod === 'ONL')) &&
-
-                    <Grid container spacing={1} justifyContent="center" alignItems="center" style={{ marginBottom: 100 }}>
-                      <Grid item xs={12} md={4} lg={8}>
-                        <Paper elevation={3} style={{ padding: "20px" }}>
-                          <h4>Pagamento com Cartão de Crédito</h4>
-
-                          <TextField
-                            variant="filled"
-                            label="Número do Cartão"
-                            name="cardNumber"
-                            fullWidth
-                            style={{ marginBottom: "15px" }}
-                            value={cardData.number}
-                            onChange={(e) => handleCardNumberChange(e.target.value)}
-                          />
-                          <TextField
-                            variant="filled"
-                            label="Nome do Titular"
-                            name="cardHolder"
-                            fullWidth
-                            style={{ marginBottom: "15px" }}
-                            value={cardData.name}
-                            onChange={(e) => {
-                              setCardData(prevData => ({
-                                ...prevData,
-                                name: e.target.value.toUpperCase()
-                              }))
-                            }}
-                          />
-                          <Grid container spacing={2}>
-                            <Grid item xs={6}>
-                              <TextField
-                                variant="filled"
-                                label="Data de Validade (MM/AA)"
-                                name="expiryDate"
-                                fullWidth
-                                style={{ marginBottom: "15px" }}
-                                value={cardData.expiry}
-                                onChange={(e) => handleExpiryChange(e.target.value)}
-                              />
-                            </Grid>
-                            <Grid item xs={6}>
-                              <TextField
-                                variant="filled"
-                                label="CVV"
-                                name="cvv"
-                                fullWidth
-                                style={{ marginBottom: "15px" }}
-                                value={cardData.cvv}
-                                onChange={(e) => {
-                                  setCardData(prevData => ({
-                                    ...prevData,
-                                    cvv: e.target.value
-                                  }))
-                                }}
-                              />
-                            </Grid>
+                        <TextField
+                          variant="filled"
+                          label="Número do Cartão"
+                          name="cardNumber"
+                          fullWidth
+                          style={{ marginBottom: "15px" }}
+                          value={cardData.number}
+                          onChange={(e) => handleCardNumberChange(e.target.value)}
+                        />
+                        <TextField
+                          variant="filled"
+                          label="Nome do Titular"
+                          name="cardHolder"
+                          fullWidth
+                          style={{ marginBottom: "15px" }}
+                          value={cardData.name}
+                          onChange={(e) => {
+                            setCardData(prevData => ({
+                              ...prevData,
+                              name: e.target.value.toUpperCase()
+                            }))
+                          }}
+                        />
+                        <Grid container spacing={2}>
+                          <Grid item xs={6}>
+                            <TextField
+                              variant="filled"
+                              label="Data de Validade (MM/AA)"
+                              name="expiryDate"
+                              fullWidth
+                              style={{ marginBottom: "15px" }}
+                              value={cardData.expiry}
+                              onChange={(e) => handleExpiryChange(e.target.value)}
+                            />
                           </Grid>
-                          <TextField
-                            variant="filled"
-                            label="CPF"
-                            name="cpf"
-                            fullWidth
-                            style={{ marginBottom: "15px" }}
-                            value={cardData.document}
-                            onChange={(e) => {
-                              setCardData(prevData => ({
-                                ...prevData,
-                                document: e.target.value
-                              }))
-                            }}
-                          />
-                          <TextField
-                            variant="filled"
-                            type='email'
-                            label="E-mail"
-                            name="emailAddress"
-                            fullWidth
-                            style={{ marginBottom: "15px" }}
-                            value={cardData.email}
-                            onChange={(e) => {
-                              setCardData(prevData => ({
-                                ...prevData,
-                                email: e.target.value
-                              }))
-                            }}
-                          />
-                        </Paper>
-                      </Grid>
+                          <Grid item xs={6}>
+                            <TextField
+                              variant="filled"
+                              label="CVV"
+                              name="cvv"
+                              fullWidth
+                              style={{ marginBottom: "15px" }}
+                              value={cardData.cvv}
+                              onChange={(e) => {
+                                setCardData(prevData => ({
+                                  ...prevData,
+                                  cvv: e.target.value
+                                }))
+                              }}
+                            />
+                          </Grid>
+                        </Grid>
+                        <TextField
+                          variant="filled"
+                          label="CPF"
+                          name="cpf"
+                          fullWidth
+                          style={{ marginBottom: "15px" }}
+                          value={cardData.document}
+                          onChange={(e) => {
+                            setCardData(prevData => ({
+                              ...prevData,
+                              document: e.target.value
+                            }))
+                          }}
+                        />
+                        <TextField
+                          variant="filled"
+                          type='email'
+                          label="E-mail"
+                          name="emailAddress"
+                          fullWidth
+                          style={{ marginBottom: "15px" }}
+                          value={cardData.email}
+                          onChange={(e) => {
+                            setCardData(prevData => ({
+                              ...prevData,
+                              email: e.target.value
+                            }))
+                          }}
+                        />
+                      </Paper>
                     </Grid>
-                  }
-
+                  </Grid>
+                  {/* } */}
                 </Grid>}
 
             </Grid>
@@ -782,9 +818,9 @@ export default function ShoppingCart() {
                       if (!isPaymentView)
                         setIsPaymentView(true)
                       else
-                        sendOrder()
+                      sendDirectOrder() //sendOrder()
                     }}
-                  >{isPaymentView ? 'Pedir!' : 'Próximo'}</Button>
+                  >{isPaymentView ? 'Enviar pedido' : 'Próximo'}</Button>
                 </Grid>
               </Grid>
             </div>
