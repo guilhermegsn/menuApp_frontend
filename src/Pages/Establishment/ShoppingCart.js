@@ -6,7 +6,7 @@ import { useHistory } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
-import { formatToCurrencyBR, formatToDoubleBR, generateCardToken, proccessPayment } from '../../services/functions';
+import { formatToCurrencyBR, formatToDoubleBR, generateCardToken } from '../../services/functions';
 import configs from '../../configs';
 
 export default function ShoppingCart() {
