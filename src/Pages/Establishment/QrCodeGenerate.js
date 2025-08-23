@@ -1,5 +1,5 @@
 import { Box, Button, Container, Paper, Typography } from '@mui/material'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 import './QrCodeGenerate.css'
 
@@ -7,9 +7,9 @@ export default function QrCodeGenerate(props) {
 
   const { estabId, type, estabName } = props.match.params;
 
-  useEffect(()=> {
-    handlePrint()
-  }, [])
+  // useEffect(()=> {
+  //   handlePrint()
+  // }, [])
 
 
   const handlePrint = () => {

@@ -42,7 +42,7 @@ export default function ShoppingCart() {
     name: "",
     obs: "",
     paymentType: "",
-    paymentMethod: ''
+    paymentMethod: '',
   })
   const [cardData, setCardData] = useState({
     number: "",
@@ -231,6 +231,8 @@ export default function ShoppingCart() {
         return
       }
 
+      dataAddress.email = 'gan_tnv@msn.com'
+
       // Envia o pedido
       const data = {
         idEstablishment,
@@ -240,6 +242,7 @@ export default function ShoppingCart() {
         clientIdUrl,
         cardToken: cardToken.id
       }
+
 
       try {
         const res = await axios.post(`${api_url}/sendSimplifiedOrder`, data)
