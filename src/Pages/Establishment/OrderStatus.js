@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import config from '../../configs';
 import axios from 'axios';
-import { Box, Button, Container, Divider, Paper, Typography } from '@mui/material';
+import { Box, Container, Divider, Paper, Typography } from '@mui/material';
 import { QRCodeCanvas } from 'qrcode.react';
 
 export default function OrderStatus(props) {
